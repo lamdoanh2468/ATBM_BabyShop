@@ -10,7 +10,7 @@ services:
       MYSQL_DATABASE: db_babyshop
       TZ: Asia/Ho_Chi_Minh
     ports:
-      - "3307:3306"
+      - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       # file dump .sql nằm cùng thư mục với docker-compose.yml
@@ -28,7 +28,7 @@ services:
     depends_on:
       - mysql
     ports:
-      - "8081:8080"
+      - "8080:8080"
     networks:
       - babyshop-net
 
