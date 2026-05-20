@@ -94,6 +94,7 @@
                                     <th>Tổng tiền</th>
                                     <th>Thanh toán</th>
                                     <th>Trạng thái</th>
+                                    <th>Hành động</th>
                                 </tr>
                             </thead>
 
@@ -130,12 +131,26 @@
                                                 </option>
                                             </select>
                                         </td>
+                                        <td>
+                                            <a class="btn-small btn-on"
+                                               href="${pageContext.request.contextPath}/admin/orders/detail?id=${order.orderId}"
+                                               title="Xem chi tiết">
+                                                <i class="fa-solid fa-eye"></i>
+                                            </a>
+
+                                            <a class="btn-small"
+                                               href="${pageContext.request.contextPath}/admin/orders/edit?id=${order.orderId}"
+                                               title="Sửa đơn hàng"
+                                               style="background:#6C63FF;color:#fff;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;">
+                                                <i class="fa-solid fa-pen"></i>
+                                            </a>
+                                        </td>
                                     </tr>
                                 </c:forEach>
 
                                 <c:if test="${empty orders}">
                                     <tr>
-                                        <td colspan="6" style="text-align:center">
+                                        <td colspan="7" style="text-align:center">
                                             Không có đơn hàng
                                         </td>
                                     </tr>

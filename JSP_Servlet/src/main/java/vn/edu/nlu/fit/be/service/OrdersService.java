@@ -19,6 +19,14 @@ public class OrdersService {
         return dao.updateStatus(orderId, status);
     }
 
+    public Order getById(int orderId) {
+        return dao.getOrderById(orderId);
+    }
+
+    public boolean updateOrder(Order order) {
+        return dao.updateOrder(order);
+    }
+
     public Map<Integer, List<OrderDetail>> getPurchasedProductsByAccount(int accountId) {
         return dao.getPurchasedProductsByAccount(accountId);
     }
@@ -69,4 +77,3 @@ public class OrdersService {
         dao.updateOrderStatus(orderId, status);
     }
 }
-
