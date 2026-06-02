@@ -94,6 +94,45 @@ public class OrdersDao extends BaseDao {
         );
     }
 
+    public Order getOrderById(int orderId) {
+        String sql = """
+            SELECT
+                o.order_id         AS orderId,
+                o.account_id       AS accountId,
+                o.voucher_id       AS voucherId,
+                o.order_date       AS orderDate,
+                o.total_amount     AS totalAmount,
+                o.delivery_address AS deliveryAddress,
+                o.payment_method   AS paymentMethod,
+                o.status           AS statusOrder,
+                a.username         AS username
+            FROM orders o
+            JOIN accounts a ON o.account_id = a.account_id
+            WHERE o.order_id = :orderId
+        """;
+
+        return jdbi.withHandle(handle ->
+                handle.createQuery(sql)
+                        .bind("orderId", orderId)
+                        .map((rs, ctx) -> {
+                            Order o = new Order();
+                            o.setOrderId(rs.getInt("orderId"));
+                            o.setAccountId(rs.getInt("accountId"));
+                            o.setVoucherId(rs.getInt("voucherId"));
+                            o.setOrderDate(rs.getTimestamp("orderDate"));
+                            o.setTotalAmount(rs.getInt("totalAmount"));
+                            o.setDeliveryAddress(rs.getString("deliveryAddress"));
+                            String pm = rs.getString("paymentMethod");
+                            o.setPaymentMethod(pm == null ? PaymentMethod.COD : PaymentMethod.valueOf(pm.trim()));
+                            o.setStatusOrder(OrderStatus.valueOf(rs.getString("statusOrder")));
+                            o.setUsername(rs.getString("username"));
+                            return o;
+                        })
+                        .findOne()
+                        .orElse(null)
+        );
+    }
+
     // ================= UPDATE STATUS =================
 
     public boolean updateStatus(int orderId, OrderStatus status) {
@@ -114,6 +153,25 @@ public class OrdersDao extends BaseDao {
                 handle.createUpdate(sql)
                         .bind("status", status)
                         .bind("id", orderId)
+                        .execute()
+        ) > 0;
+    }
+
+    public boolean updateOrder(Order order) {
+        String sql = """
+            UPDATE orders
+            SET delivery_address = :deliveryAddress,
+                payment_method = :paymentMethod,
+                status = :status
+            WHERE order_id = :orderId
+        """;
+
+        return jdbi.withHandle(handle ->
+                handle.createUpdate(sql)
+                        .bind("deliveryAddress", order.getDeliveryAddress())
+                        .bind("paymentMethod", order.getPaymentMethod().name())
+                        .bind("status", order.getStatusOrder().name())
+                        .bind("orderId", order.getOrderId())
                         .execute()
         ) > 0;
     }

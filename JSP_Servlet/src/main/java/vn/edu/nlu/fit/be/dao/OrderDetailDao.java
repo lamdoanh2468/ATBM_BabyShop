@@ -24,9 +24,11 @@ public class OrderDetailDao extends BaseDao {
 
     public List<OrderDetail> getOrderDetailsByOrderId(int orderId) {
         String sql = """
-                    SELECT order_id, product_id, unit_price, quantity
-                    FROM order_details
-                    WHERE order_id = :orderId
+                    SELECT od.order_id, od.product_id, od.unit_price, od.quantity,
+                           p.product_name, p.product_image
+                    FROM order_details od
+                    JOIN products p ON od.product_id = p.product_id
+                    WHERE od.order_id = :orderId
                 """;
 
         return jdbi.withHandle(handle ->
@@ -38,6 +40,11 @@ public class OrderDetailDao extends BaseDao {
                             d.setProductId(rs.getInt("product_id"));
                             d.setUnitPrice(rs.getInt("unit_price"));
                             d.setQuantity(rs.getInt("quantity"));
+                            Product product = new Product();
+                            product.setProductId(rs.getInt("product_id"));
+                            product.setProductName(rs.getString("product_name"));
+                            product.setProductImage(rs.getString("product_image"));
+                            d.setProduct(product);
                             return d;
                         })
                         .list()

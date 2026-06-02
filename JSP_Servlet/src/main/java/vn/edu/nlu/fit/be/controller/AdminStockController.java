@@ -33,19 +33,29 @@ public class AdminStockController extends HttpServlet {
 
         String action = req.getParameter("action");
 
+        if ("add".equals(action) || "edit".equals(action)) {
+            if ("edit".equals(action)) {
+                int id = Integer.parseInt(req.getParameter("id"));
+                Stock stock = stockDao.getStockById(id);
+                if (stock != null) {
+                    stock.setProductCount(stockDao.getTotalProductsInStock(stock.getStockId()));
+                }
+                req.setAttribute("stockToEdit", stock);
+                req.setAttribute("stockFormProductCount", stock != null ? stock.getProductCount() : 0);
+            } else {
+                req.setAttribute("stockFormProductCount", 0);
+            }
+
+            req.getRequestDispatcher("/admin_stock_form.jsp").forward(req, resp);
+            return;
+        }
+
         // load list kho
         List<Stock> stocks = stockDao.getAllStocks();
         for (Stock s : stocks) {
             s.setProductCount(stockDao.getTotalProductsInStock(s.getStockId()));
         }
         req.setAttribute("stocks", stocks);
-
-        // EDIT
-        if ("edit".equals(action)) {
-            int id = Integer.parseInt(req.getParameter("id"));
-            Stock stock = stockDao.getStockById(id);
-            req.setAttribute("stockToEdit", stock);
-        }
 
         req.getRequestDispatcher("/admin_stocks.jsp").forward(req, resp);
     }
@@ -90,4 +100,3 @@ public class AdminStockController extends HttpServlet {
         resp.sendRedirect(req.getContextPath() + "/admin/stocks");
     }
 }
-

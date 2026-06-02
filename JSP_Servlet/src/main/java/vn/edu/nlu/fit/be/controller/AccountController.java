@@ -45,6 +45,11 @@ public class AccountController extends HttpServlet {
 
         String path = req.getServletPath();
 
+        if (path.equals("/admin/accounts/add")) {
+            req.getRequestDispatcher("/admin_account_form.jsp").forward(req, resp);
+            return;
+        }
+
         // ===== LOAD ACCOUNT LIST =====
         if (path.equals("/admin/accounts")) {
 

@@ -50,29 +50,25 @@ public class AdminProductController extends HttpServlet {
 
         String action = req.getParameter("action");
 
+        if ("add".equals(action) || "edit".equals(action)) {
+            loadFormData(req);
+
+            if ("edit".equals(action)) {
+                int id = Integer.parseInt(req.getParameter("id"));
+                Product product = productService.getById(id);
+                req.setAttribute("product", product);
+            }
+
+            req.getRequestDispatcher("/admin_product_form.jsp").forward(req, resp);
+            return;
+        }
+
         // ===== LIST =====
         List<Product> products = productService.getAllProducts();
         req.setAttribute("products", products);
 
         // ===== COMMON DATA =====
-        req.setAttribute("categories", categoryDao.findAll());
-        req.setAttribute("brands", brandDao.getBrands());
-
-        List<Category> categories = categoryDao.findAll();
-        Map<Integer, String> categoryMap = new HashMap<>();
-        for (Category c : categories) {
-            categoryMap.put(c.getCategoryId(), c.getCategoryName());
-        }
-        req.setAttribute("categoryMap", categoryMap);
-
-
-
-        // ===== EDIT =====
-        if ("edit".equals(action)) {
-            int id = Integer.parseInt(req.getParameter("id"));
-            Product product = productService.getById(id);
-            req.setAttribute("product", product);
-        }
+        loadFormData(req);
 
         req.getRequestDispatcher("/admin_products.jsp").forward(req, resp);
     }
@@ -144,5 +140,17 @@ public class AdminProductController extends HttpServlet {
         p.setProductImage(req.getParameter("productImage"));
 
         return p;
+    }
+
+    private void loadFormData(HttpServletRequest req) {
+        req.setAttribute("categories", categoryDao.findAll());
+        req.setAttribute("brands", brandDao.getBrands());
+
+        List<Category> categories = categoryDao.findAll();
+        Map<Integer, String> categoryMap = new HashMap<>();
+        for (Category c : categories) {
+            categoryMap.put(c.getCategoryId(), c.getCategoryName());
+        }
+        req.setAttribute("categoryMap", categoryMap);
     }
 }
