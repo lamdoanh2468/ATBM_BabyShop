@@ -177,4 +177,41 @@ public class OrdersDao extends BaseDao {
                         .collect(Collectors.groupingBy(OrderDetail::getOrderId))
         );
     }
+    public Order getOrderById(int orderId) {
+        String sql = """
+            SELECT
+                o.order_id         AS orderId,
+                o.account_id       AS accountId,
+                o.voucher_id       AS voucherId,
+                o.order_date       AS orderDate,
+                o.total_amount     AS totalAmount,
+                o.delivery_address AS deliveryAddress,
+                o.payment_method   AS paymentMethod,
+                o.status           AS statusOrder
+            FROM orders o
+            WHERE o.order_id = :orderId
+        """;
+        return jdbi.withHandle(handle ->
+                handle.createQuery(sql)
+                        .bind("orderId", orderId)
+                        .map((rs, ctx) -> {
+                            Order o = new Order();
+                            o.setOrderId(rs.getInt("orderId"));
+                            o.setAccountId(rs.getInt("accountId"));
+                            o.setVoucherId(rs.getInt("voucherId"));
+                            o.setOrderDate(rs.getTimestamp("orderDate"));
+                            o.setTotalAmount(rs.getInt("totalAmount"));
+                            o.setDeliveryAddress(rs.getString("deliveryAddress"));
+                            String pm = rs.getString("paymentMethod");
+                            o.setPaymentMethod(
+                                    pm == null ? PaymentMethod.COD : PaymentMethod.valueOf(pm.trim())
+                            );
+                            o.setStatusOrder(
+                                    OrderStatus.valueOf(rs.getString("statusOrder"))
+                            );
+                            return o;
+                        })
+                        .one()
+        );
+    }
 }

@@ -21,17 +21,22 @@ public class DBProperties {
         }
     }
 
-    public static String host = prop.getProperty("db.host");
+    private static String get(String envName, String propertyName) {
+        String envValue = System.getenv(envName);
+        return envValue == null || envValue.isBlank() ? prop.getProperty(propertyName) : envValue;
+    }
 
-    public static String port = prop.getProperty("db.port");
+    public static String host = get("DB_HOST", "db.host");
 
-    public static String user = prop.getProperty("db.user");
+    public static String port = get("DB_PORT", "db.port");
 
-    public static String password = prop.getProperty("db.password");
+    public static String user = get("DB_USER", "db.user");
 
-    public static String dbname = prop.getProperty("db.dbname");
+    public static String password = get("DB_PASSWORD", "db.password");
 
-    public static String option = prop.getProperty("db.option");
+    public static String dbname = get("DB_NAME", "db.dbname");
+
+    public static String option = get("DB_OPTION", "db.option");
 
     public static void main(String[] args) {
         System.out.println(host);

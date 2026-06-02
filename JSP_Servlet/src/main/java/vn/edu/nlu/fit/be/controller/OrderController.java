@@ -1,134 +1,189 @@
 package vn.edu.nlu.fit.be.controller;
 
-import jakarta.servlet.*;
-import jakarta.servlet.http.*;
-import jakarta.servlet.annotation.*;
-import vn.edu.nlu.fit.be.model.*;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import vn.edu.nlu.fit.be.model.Account;
+import vn.edu.nlu.fit.be.model.Cart;
 import vn.edu.nlu.fit.be.model.CartItem.CartItem;
-import vn.edu.nlu.fit.be.service.*;
+import vn.edu.nlu.fit.be.model.OrderStatus;
+import vn.edu.nlu.fit.be.model.PaymentMethod;
+import vn.edu.nlu.fit.be.model.Voucher;
+import vn.edu.nlu.fit.be.service.CertificateService;
+import vn.edu.nlu.fit.be.service.OrderSigningService;
+import vn.edu.nlu.fit.be.service.OrdersService;
+import vn.edu.nlu.fit.be.service.StockProductService;
+import vn.edu.nlu.fit.be.service.VoucherService;
 
 import java.io.IOException;
 
 @WebServlet(name = "OrderController", value = "/order")
 public class OrderController extends HttpServlet {
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
+    private final VoucherService voucherService = new VoucherService();
+    private final OrdersService ordersService = new OrdersService();
+    private final StockProductService stockProductService = new StockProductService();
+    private final OrderSigningService orderSigningService = new OrderSigningService();
+    private final CertificateService certificateService = new CertificateService();
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        response.sendRedirect(request.getContextPath() + "/cart");
     }
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        HttpSession session = request.getSession();
-        VoucherService voucherService = new VoucherService();
-        OrdersService ordersService = new OrdersService();
-        StockProductService spService = new StockProductService();
-        Account account = (Account) session.getAttribute("USER");
-        if (account == null) {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        request.setCharacterEncoding("UTF-8");
+
+        HttpSession session = request.getSession(false);
+        if (session == null || session.getAttribute("USER") == null) {
             response.sendRedirect(request.getContextPath() + "/login");
             return;
         }
 
+        Account account = (Account) session.getAttribute("USER");
         Cart cart = (Cart) session.getAttribute("cart");
         if (cart == null || cart.getTotalQuantity() == 0) {
             response.sendRedirect(request.getContextPath() + "/cart");
             return;
         }
 
-        request.setCharacterEncoding("UTF-8");
-
-        String deliveryAddress = request.getParameter("deliveryAddress");
-        String paymentMethodStr = request.getParameter("paymentMethod");
-        String voucherCode = request.getParameter("voucherCode");
-        if (voucherCode == null || voucherCode.trim().isEmpty()) {
+        String action = request.getParameter("action");
+        String deliveryAddress = trimToNull(request.getParameter("deliveryAddress"));
+        String voucherCode = trimToNull(request.getParameter("voucherCode"));
+        if (voucherCode == null) {
             voucherCode = (String) session.getAttribute("voucherCode");
         }
-        String action = request.getParameter("action");
 
-        // Validate địa chỉ giao hàng (chỉ khi không phải action voucher)
-        if (action == null && (deliveryAddress == null || deliveryAddress.trim().isEmpty())) {
+        PaymentMethod paymentMethod = parsePaymentMethod(request.getParameter("paymentMethod"));
+
+        if ("applyVoucher".equals(action)) {
+            applyVoucher(request, response, session, deliveryAddress, paymentMethod, voucherCode);
+            return;
+        }
+
+        if ("removeVoucher".equals(action)) {
+            removeVoucher(request, response, session, deliveryAddress, paymentMethod);
+            return;
+        }
+
+        if (deliveryAddress == null) {
             request.setAttribute("error", "Vui lòng nhập địa chỉ giao hàng");
             request.getRequestDispatcher("/cart.jsp").forward(request, response);
             return;
         }
 
-
-        PaymentMethod paymentMethod;
-        try {
-            paymentMethod = PaymentMethod.valueOf(paymentMethodStr);
-        } catch (Exception e) {
-            paymentMethod = PaymentMethod.COD;
-        }
-
-        //===== Áp dụng phần voucher =====
-        int totalPrice = cart.getTotalPrice();
-        int discount = 0;
-        Integer discountAmount = (Integer) session.getAttribute("discountAmount");
-        if (discountAmount != null) {
-            discount = discountAmount;
-        }
-        int discountSafe = Math.min(discount, totalPrice);
-        totalPrice = totalPrice - discountSafe;
-        if ("applyVoucher".equals(action)) {
-            Voucher v = voucherService.findByCode(voucherCode);
-            if (v == null) {
-                request.setAttribute("voucherError", "Mã voucher không hợp lệ");
-                request.getRequestDispatcher("/cart.jsp").forward(request, response);
-                return;
-            }
-            // Lưu vào session
-            session.setAttribute("discountAmount", v.getDiscountAmount());
-            session.setAttribute("voucherCode", voucherCode);
-            session.setAttribute("finalPrice", totalPrice);
-            session.setAttribute("deliveryAddress", deliveryAddress);
-            session.setAttribute("paymentMethod", paymentMethod);
-            request.getRequestDispatcher("/cart.jsp").forward(request, response);
-            return;
-        }
-        if ("removeVoucher".equals(action)) {
-            // Lưu vào session
-            session.removeAttribute("discountAmount");
-            session.removeAttribute("voucherCode");
-            session.setAttribute("deliveryAddress", deliveryAddress);
-            session.setAttribute("paymentMethod", paymentMethod);
-            request.getRequestDispatcher("/cart.jsp").forward(request, response);
-            return;
-        }
-        // Xử lý voucher an toàn, tránh NullPointerException
-        Voucher voucher = null;
-        if (voucherCode != null && !voucherCode.trim().isEmpty()) {
-            voucher = voucherService.findByCode(voucherCode);
-        }
-
-        // =====================
-        Integer voucherId = (voucher != null) ? voucher.getVoucherId() : null;
-
-        // đảm bảo không âm
-        if (spService.checkAvailable(cart)) {
-            int orderId = ordersService.createOrderFromCart(account, cart, deliveryAddress, paymentMethod, voucherId, totalPrice);
-            for (CartItem item : cart.getItems()) {
-                int productId = item.getProduct().getProductId();
-                int quantity = item.getQuantity();
-                spService.updateStockProduct(productId, quantity);
-            }
-            ordersService.updateStatus(orderId,OrderStatus.Pending);
-            // clear cart và session attributes
-            cart.removeAllItems();
-            session.setAttribute("cart", cart);
-            session.removeAttribute("discountAmount");
-            session.removeAttribute("voucherCode");
-            session.removeAttribute("finalPrice");
-            session.removeAttribute("deliveryAddress");
-            session.removeAttribute("paymentMethod");
-
-            // redirect về cart kèm orderId
-            response.sendRedirect(request.getContextPath() + "/cart?paid=1&orderId=" + orderId);
-        } else {
-            // Lấy danh sách sản phẩm không đủ hàng để hiển thị cho user
-            java.util.List<String> outOfStockProducts = spService.getOutOfStockProducts(cart);
-            String errorMessage = "Không đủ số lượng tồn kho cho: " + String.join(", ", outOfStockProducts);
-            session.setAttribute("stockError", errorMessage);
+        if (!stockProductService.checkAvailable(cart)) {
+            var outOfStockProducts = stockProductService.getOutOfStockProducts(cart);
+            session.setAttribute("stockError", "Không đủ số lượng tồn kho cho: " + String.join(", ", outOfStockProducts));
             response.sendRedirect(request.getContextPath() + "/cart?paid=0");
+            return;
         }
 
+        Voucher voucher = voucherCode == null ? null : voucherService.findByCode(voucherCode);
+        Integer voucherId = voucher == null ? null : voucher.getVoucherId();
+        int finalPrice = calculateFinalPrice(cart, session);
+
+        try {
+            int orderId = ordersService.createOrderFromCart(
+                    account,
+                    cart,
+                    deliveryAddress,
+                    paymentMethod,
+                    voucherId,
+                    finalPrice
+            );
+
+            for (CartItem item : cart.getItems()) {
+                stockProductService.updateStockProduct(item.getProduct().getProductId(), item.getQuantity());
+            }
+
+            // Flow ATBM: đơn mới tạo chưa được xem là thanh toán thành công.
+            // Nó phải chờ user ký orderHash bằng private key.
+            ordersService.updateStatus(orderId, OrderStatus.WAITING_SIGNATURE);
+
+            // Tạo key/certificate nếu user chưa có certificate hợp lệ.
+            certificateService.ensureActiveCert(account.getAccountId());
+
+            // Lưu snapshot bất biến vào ORDER_SIGNS và sinh SHA-256 orderHash.
+            orderSigningService.createOrderSignSnapshot(orderId, account.getAccountId());
+
+            clearCartSession(session, cart);
+            response.sendRedirect(request.getContextPath() + "/order-sign/package?orderId=" + orderId);
+        } catch (Exception e) {
+            request.setAttribute("error", "Không thể tạo đơn hàng cần ký: " + e.getMessage());
+            request.getRequestDispatcher("/cart.jsp").forward(request, response);
+        }
+    }
+
+    private void applyVoucher(HttpServletRequest request, HttpServletResponse response, HttpSession session,
+                              String deliveryAddress, PaymentMethod paymentMethod, String voucherCode)
+            throws ServletException, IOException {
+        if (voucherCode == null) {
+            request.setAttribute("voucherError", "Vui lòng nhập mã voucher");
+            request.getRequestDispatcher("/cart.jsp").forward(request, response);
+            return;
+        }
+
+        Voucher voucher = voucherService.findByCode(voucherCode);
+        if (voucher == null) {
+            request.setAttribute("voucherError", "Mã voucher không hợp lệ");
+            request.getRequestDispatcher("/cart.jsp").forward(request, response);
+            return;
+        }
+
+        session.setAttribute("discountAmount", voucher.getDiscountAmount());
+        session.setAttribute("voucherCode", voucherCode);
+        session.setAttribute("deliveryAddress", deliveryAddress);
+        session.setAttribute("paymentMethod", paymentMethod);
+        request.getRequestDispatcher("/cart.jsp").forward(request, response);
+    }
+
+    private void removeVoucher(HttpServletRequest request, HttpServletResponse response, HttpSession session,
+                               String deliveryAddress, PaymentMethod paymentMethod)
+            throws ServletException, IOException {
+        session.removeAttribute("discountAmount");
+        session.removeAttribute("voucherCode");
+        session.removeAttribute("finalPrice");
+        session.setAttribute("deliveryAddress", deliveryAddress);
+        session.setAttribute("paymentMethod", paymentMethod);
+        request.getRequestDispatcher("/cart.jsp").forward(request, response);
+    }
+
+    private int calculateFinalPrice(Cart cart, HttpSession session) {
+        int totalPrice = cart.getTotalPrice();
+        Integer discountAmount = (Integer) session.getAttribute("discountAmount");
+        int discount = discountAmount == null ? 0 : Math.min(discountAmount, totalPrice);
+        return totalPrice - discount;
+    }
+
+    private PaymentMethod parsePaymentMethod(String value) {
+        try {
+            return PaymentMethod.valueOf(value);
+        } catch (Exception e) {
+            return PaymentMethod.COD;
+        }
+    }
+
+    private String trimToNull(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+        return value.trim();
+    }
+
+    private void clearCartSession(HttpSession session, Cart cart) {
+        cart.removeAllItems();
+        session.setAttribute("cart", cart);
+        session.removeAttribute("discountAmount");
+        session.removeAttribute("voucherCode");
+        session.removeAttribute("finalPrice");
+        session.removeAttribute("deliveryAddress");
+        session.removeAttribute("paymentMethod");
     }
 }

@@ -10,7 +10,9 @@ public class OrdersService {
 
     private OrdersDao dao = new OrdersDao();
 
-
+    public Order getOrderById(int orderId) {
+        return dao.getOrderById(orderId);
+    }
     public List<Order> getAll() {
         return dao.getAllOrders();
     }
@@ -45,7 +47,7 @@ public class OrdersService {
         Order o = new Order();
         o.setAccountId(account.getAccountId());
         o.setVoucherId(voucherId == null ? 0 : voucherId);
-        o.setStatusOrder(OrderStatus.Pending);
+        o.setStatusOrder(OrderStatus.PENDING);
         o.setTotalAmount(totalPrice);
         o.setDeliveryAddress(deliveryAddress.trim());
         o.setPaymentMethod(paymentMethod);
@@ -67,6 +69,14 @@ public class OrdersService {
 
     public void confirmOrder(int orderId, String status) {
         dao.updateOrderStatus(orderId, status);
+    }
+
+    public boolean isVerified(int orderId) {
+        return false;
+    }
+
+    public boolean isOwner(int orderId, int accountId) {
+        return false;
     }
 }
 

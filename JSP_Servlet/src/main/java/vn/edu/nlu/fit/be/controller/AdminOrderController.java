@@ -1,13 +1,18 @@
 package vn.edu.nlu.fit.be.controller;
 
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import vn.edu.nlu.fit.be.dao.OrderDetailDao;
-import vn.edu.nlu.fit.be.model.*;
+import vn.edu.nlu.fit.be.model.Account;
+import vn.edu.nlu.fit.be.model.Order;
+import vn.edu.nlu.fit.be.model.OrderDetail;
+import vn.edu.nlu.fit.be.model.OrderStatus;
 import vn.edu.nlu.fit.be.service.OrdersService;
 import vn.edu.nlu.fit.be.service.StockProductService;
-
-import jakarta.servlet.*;
-import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.*;
 
 import java.io.IOException;
 import java.util.List;
@@ -18,88 +23,91 @@ import java.util.List;
 })
 public class AdminOrderController extends HttpServlet {
 
-    private OrdersService service = new OrdersService();
-    private StockProductService stockService = new StockProductService();
-    private OrderDetailDao orderDetailDao = new OrderDetailDao();
+    private final OrdersService ordersService = new OrdersService();
+    private final StockProductService stockService = new StockProductService();
+    private final OrderDetailDao orderDetailDao = new OrderDetailDao();
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        HttpSession session = req.getSession(false);
-
-        //chưa login
-        if (session == null || session.getAttribute("USER") == null) {
-            resp.sendRedirect(req.getContextPath() + "/login");
+        if (!isAdmin(request, response)) {
             return;
         }
 
-        Account acc = (Account) session.getAttribute("USER");
-
-        //không phải admin
-        if (acc.getRole() <= 0) {
-            resp.sendRedirect(req.getContextPath() + "/403.jsp");
+        if ("/admin/orders/status".equals(request.getServletPath())) {
+            updateStatus(request, response);
             return;
         }
-        String path = req.getServletPath();
 
-        // ===== AJAX UPDATE STATUS =====
-        if (path.equals("/admin/orders/status")) {
-            try {
-                int id = Integer.parseInt(req.getParameter("id"));
-                OrderStatus newStatus = OrderStatus.valueOf(req.getParameter("status"));
+        List<Order> orders = ordersService.getAll();
+        request.setAttribute("orders", orders);
+        request.getRequestDispatcher("/admin_orders.jsp").forward(request, response);
+    }
 
-                // Cập nhật trạng thái đơn hàng trước
-                boolean statusUpdated = service.updateStatus(id, newStatus);
+    private void updateStatus(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        response.setContentType("text/plain; charset=UTF-8");
 
-                if (!statusUpdated) {
-                    resp.setContentType("text/plain");
-                    resp.getWriter().write("FAIL");
+        try {
+            int orderId = Integer.parseInt(request.getParameter("id"));
+            OrderStatus newStatus = OrderStatus.valueOf(request.getParameter("status"));
+
+            if (newStatus == OrderStatus.DONE) {
+                if (!ordersService.isVerified(orderId)) {
+                    response.getWriter().write("FAIL: Đơn hàng chưa verify chữ ký nên không được chuyển sang trạng thái thành công");
                     return;
                 }
-
-                // Xử lý stock (nếu có lỗi thì vẫn coi như thành công vì status đã update)
-                boolean stockUpdated = true;
-                try {
-                    List<OrderDetail> details = orderDetailDao.getOrderDetailsByOrderId(id);
-
-                    if (newStatus == OrderStatus.Done) {
-                        // Khi Done: cập nhật sold_quantity cho từng sản phẩm
-                        for (OrderDetail detail : details) {
-                            if (!stockService.updateSoldQuantity(detail.getProductId(), detail.getQuantity())) {
-                                stockUpdated = false;
-                            }
-                        }
-                    } else if (newStatus == OrderStatus.Cancelled) {
-                        // Khi Cancelled: hoàn lại stock (tăng total_quantity)
-                        for (OrderDetail detail : details) {
-                            if (!stockService.restoreStock(detail.getProductId(), detail.getQuantity())) {
-                                stockUpdated = false;
-                            }
-                        }
-                    }
-                } catch (Exception stockEx) {
-                    stockEx.printStackTrace();
-                    stockUpdated = false;
-                }
-
-                resp.setContentType("text/plain");
-                if (stockUpdated) {
-                    resp.getWriter().write("OK");
-                } else {
-                    resp.getWriter().write("PARTIAL");
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                resp.setContentType("text/plain");
-                resp.getWriter().write("FAIL: " + e.getMessage());
             }
-            return;
+
+            boolean statusUpdated = ordersService.updateStatus(orderId, newStatus);
+            if (!statusUpdated) {
+                response.getWriter().write("FAIL");
+                return;
+            }
+
+            boolean stockUpdated = updateStockByStatus(orderId, newStatus);
+            response.getWriter().write(stockUpdated ? "OK" : "PARTIAL");
+        } catch (Exception e) {
+            response.getWriter().write("FAIL: " + e.getMessage());
+        }
+    }
+
+    private boolean updateStockByStatus(int orderId, OrderStatus newStatus) {
+        try {
+            List<OrderDetail> details = orderDetailDao.getOrderDetailsByOrderId(orderId);
+            boolean success = true;
+
+            if (newStatus == OrderStatus.DONE) {
+                for (OrderDetail detail : details) {
+                    if (!stockService.updateSoldQuantity(detail.getProductId(), detail.getQuantity())) {
+                        success = false;
+                    }
+                }
+            } else if (newStatus == OrderStatus.CANCELLED || newStatus == OrderStatus.CERTIFICATE_INVALID
+                    || newStatus == OrderStatus.SIGNATURE_INVALID || newStatus == OrderStatus.TAMPERED) {
+                for (OrderDetail detail : details) {
+                    if (!stockService.restoreStock(detail.getProductId(), detail.getQuantity())) {
+                        success = false;
+                    }
+                }
+            }
+            return success;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private boolean isAdmin(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        HttpSession session = request.getSession(false);
+        if (session == null || session.getAttribute("USER") == null) {
+            response.sendRedirect(request.getContextPath() + "/login");
+            return false;
         }
 
-        // ===== LOAD ORDER LIST =====
-        List<Order> orders = service.getAll();
-        req.setAttribute("orders", orders);
-
-        req.getRequestDispatcher("/admin_orders.jsp").forward(req, resp);
+        Account account = (Account) session.getAttribute("USER");
+        if (account.getRole() <= 0) {
+            response.sendRedirect(request.getContextPath() + "/403.jsp");
+            return false;
+        }
+        return true;
     }
 }

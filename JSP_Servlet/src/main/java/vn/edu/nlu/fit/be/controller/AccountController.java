@@ -10,6 +10,7 @@ import vn.edu.nlu.fit.be.model.AccountStatus;
 import vn.edu.nlu.fit.be.service.AccountService;
 
 import java.io.IOException;
+import java.security.cert.Certificate;
 import java.util.List;
 
 @WebServlet(urlPatterns = {
@@ -34,7 +35,6 @@ public class AccountController extends HttpServlet {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
-
         Account admin = (Account) session.getAttribute("USER");
 
         // không phải admin
