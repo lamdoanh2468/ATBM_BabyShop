@@ -1,0 +1,113 @@
+.upload-page {
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 0 20px;
+    min-height: 50vh;
+}
+.upload-card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    text-align: center;
+}
+.upload-card h2 {
+    margin-top: 0;
+    color: #1e293b;
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+}
+.upload-card p {
+    color: #64748b;
+    font-size: 0.95rem;
+    margin-bottom: 30px;
+}
+.file-drop {
+    border: 2px dashed #cbd5e1;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 50px 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #fafafa;
+    margin-bottom: 24px;
+}
+.file-drop:hover, .file-drop.active {
+    border-color: #6366f1;
+    background: #eef2ff;
+}
+.file-drop i {
+    font-size: 3rem;
+    color: #94a3b8;
+    transition: color 0.2s;
+}
+.file-drop:hover i, .file-drop.active i {
+    color: #6366f1;
+}
+.file-drop span {
+    font-weight: 600;
+    color: #1e293b;
+    font-size: 1.1rem;
+}
+.file-drop small {
+    color: #64748b;
+}
+input[type="file"] {
+    display: none;
+}
+.btn-submit {
+    background: #6366f1;
+    color: #fff;
+    border: none;
+    padding: 14px 24px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    width: 100%;
+    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+.btn-submit:hover {
+    background: #4f46e5;
+}
+.btn-submit:disabled {
+    background: #94a3b8;
+    cursor: not-allowed;
+}
+/* Verification steps */
+.verify-steps {
+    text-align: left;
+    margin-top: 20px;
+    display: none;
+}
+.step {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    color: #64748b;
+    font-size: 0.95rem;
+}
+.step i {
+    font-size: 1.2rem;
+    width: 24px;
+    text-align: center;
+}
+.step.active {
+    color: #1e293b;
+    font-weight: 600;
+}
+.step.success {
+    color: #10b981;
+}
+.step.error {
+    color: #ef4444;
+}
