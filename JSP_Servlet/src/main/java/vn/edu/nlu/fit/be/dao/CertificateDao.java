@@ -1,87 +1,107 @@
 package vn.edu.nlu.fit.be.dao;
 
-import vn.edu.nlu.fit.be.model.Certificate;
+import vn.edu.nlu.fit.be.model.CertificateStatus;
+import vn.edu.nlu.fit.be.model.UserCertificate;
 
 import java.util.List;
+import java.util.Optional;
 
 public class CertificateDao extends BaseDao {
 
-    public Certificate findActiveByAccountId(int accountId) {
+    public Optional<UserCertificate> findActiveByAccountId(int accountId) {
         String sql = """
-            SELECT * FROM certificates
-            WHERE account_id = :accountId AND status = 'Active'
-            ORDER BY issued_at DESC LIMIT 1
-        """;
+                SELECT certificate_id, account_id, public_key_pem, certificate_pem, status,
+                       created_at, expires_at, revoked_at, revoke_reason
+                FROM certificates
+                WHERE account_id = :accountId
+                  AND status = 'ACTIVE'
+                  AND expires_at > NOW()
+                ORDER BY certificate_id DESC
+                LIMIT 1
+                """;
 
-        return jdbi.withHandle(handle ->
-                handle.createQuery(sql)
-                        .bind("accountId", accountId)
-                        .mapToBean(Certificate.class)
-                        .findOne()
-                        .orElse(null)
-        );
+        return jdbi.withHandle(handle -> handle.createQuery(sql)
+                .bind("accountId", accountId)
+                .mapToBean(UserCertificate.class)
+                .findOne());
     }
 
-    public List<Certificate> findRevokedByAccountId(int accountId) {
+    public Optional<UserCertificate> findById(int certificateId) {
         String sql = """
-            SELECT * FROM certificates
-            WHERE account_id = :accountId AND status = 'Revoked'
-            ORDER BY revoked_at DESC
-        """;
+                SELECT certificate_id, account_id, public_key_pem, certificate_pem, status,
+                       created_at, expires_at, revoked_at, revoke_reason
+                FROM certificates
+                WHERE certificate_id = :certificateId
+                """;
 
-        return jdbi.withHandle(handle ->
-                handle.createQuery(sql)
-                        .bind("accountId", accountId)
-                        .mapToBean(Certificate.class)
-                        .list()
-        );
+        return jdbi.withHandle(handle -> handle.createQuery(sql)
+                .bind("certificateId", certificateId)
+                .mapToBean(UserCertificate.class)
+                .findOne());
     }
 
-    public java.util.List<Certificate> findRecentRevoked(int limit) {
-        String sql = "SELECT * FROM certificates WHERE status = 'Revoked' ORDER BY revoked_at DESC LIMIT :limit";
-        return jdbi.withHandle(handle ->
-                handle.createQuery(sql)
-                        .bind("limit", limit)
-                        .mapToBean(Certificate.class)
-                        .list()
-        );
+    public List<UserCertificate> findRevokedByAccountId(int accountId) {
+        String sql = """
+                SELECT certificate_id, account_id, public_key_pem, certificate_pem, status,
+                       created_at, expires_at, revoked_at, revoke_reason
+                FROM certificates
+                WHERE account_id = :accountId
+                  AND status = 'REVOKED'
+                ORDER BY revoked_at DESC
+                """;
+
+        return jdbi.withHandle(handle -> handle.createQuery(sql)
+                .bind("accountId", accountId)
+                .mapToBean(UserCertificate.class)
+                .list());
     }
 
-    public long insert(Certificate cert) {
+    public int create(int accountId, String publicKeyPem, String certificatePem) {
         String sql = """
-            INSERT INTO certificates
-                (account_id, public_key_pem, certificate_pem, serial_number, status, issued_at, expired_at, created_at)
-            VALUES
-                (:accountId, :publicKeyPem, :certificatePem, :serialNumber, :status, :issuedAt, :expiredAt, NOW())
-        """;
+                INSERT INTO certificates
+                    (account_id, public_key_pem, certificate_pem, status, created_at, expires_at)
+                VALUES
+                    (:accountId, :publicKeyPem, :certificatePem, 'ACTIVE', NOW(), DATE_ADD(NOW(), INTERVAL 365 DAY))
+                """;
 
-        return jdbi.withHandle(handle ->
-                handle.createUpdate(sql)
-                        .bind("accountId", cert.getAccountId())
-                        .bind("publicKeyPem", cert.getPublicKeyPem())
-                        .bind("certificatePem", cert.getCertificatePem())
-                        .bind("serialNumber", cert.getSerialNumber())
-                        .bind("status", cert.getStatus())
-                        .bind("issuedAt", cert.getIssuedAt())
-                        .bind("expiredAt", cert.getExpiredAt())
-                        .executeAndReturnGeneratedKeys("certificate_id")
-                        .mapTo(Long.class)
-                        .one()
-        );
+        return jdbi.withHandle(handle -> handle.createUpdate(sql)
+                .bind("accountId", accountId)
+                .bind("publicKeyPem", publicKeyPem)
+                .bind("certificatePem", certificatePem)
+                .executeAndReturnGeneratedKeys("certificate_id")
+                .mapTo(Integer.class)
+                .one());
     }
 
-    public void revoke(int certificateId, String reason) {
+    public boolean revokeActiveByAccountId(int accountId, String reason) {
         String sql = """
-            UPDATE certificates
-            SET status = 'Revoked', revoked_at = NOW(), revoke_reason = :reason
-            WHERE certificate_id = :id
-        """;
+                UPDATE certificates
+                SET status = 'REVOKED', revoked_at = NOW(), revoke_reason = :reason
+                WHERE account_id = :accountId
+                  AND status = 'ACTIVE'
+                """;
 
-        jdbi.withHandle(handle ->
-                handle.createUpdate(sql)
-                        .bind("reason", reason)
-                        .bind("id", certificateId)
-                        .execute()
-        );
+        return jdbi.withHandle(handle -> handle.createUpdate(sql)
+                .bind("accountId", accountId)
+                .bind("reason", reason)
+                .execute()) > 0;
+    }
+
+    public boolean revokeById(int certificateId, String reason) {
+        String sql = """
+                UPDATE certificates
+                SET status = 'REVOKED', revoked_at = NOW(), revoke_reason = :reason
+                WHERE certificate_id = :certificateId
+                  AND status = 'ACTIVE'
+                """;
+
+        return jdbi.withHandle(handle -> handle.createUpdate(sql)
+                .bind("certificateId", certificateId)
+                .bind("reason", reason)
+                .execute()) > 0;
+    }
+
+    public boolean isUsable(UserCertificate certificate) {
+        return certificate != null && certificate.getStatus() == CertificateStatus.ACTIVE;
     }
 }
