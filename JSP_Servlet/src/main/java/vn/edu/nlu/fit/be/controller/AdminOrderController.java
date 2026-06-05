@@ -1,13 +1,18 @@
 package vn.edu.nlu.fit.be.controller;
 
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import vn.edu.nlu.fit.be.dao.OrderDetailDao;
-import vn.edu.nlu.fit.be.model.*;
+import vn.edu.nlu.fit.be.model.Account;
+import vn.edu.nlu.fit.be.model.Order;
+import vn.edu.nlu.fit.be.model.OrderDetail;
+import vn.edu.nlu.fit.be.model.OrderStatus;
 import vn.edu.nlu.fit.be.service.OrdersService;
 import vn.edu.nlu.fit.be.service.StockProductService;
-
-import jakarta.servlet.*;
-import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.*;
 
 import java.io.IOException;
 import java.util.List;
@@ -18,9 +23,9 @@ import java.util.List;
 })
 public class AdminOrderController extends HttpServlet {
 
-    private OrdersService service = new OrdersService();
-    private StockProductService stockService = new StockProductService();
-    private OrderDetailDao orderDetailDao = new OrderDetailDao();
+    private final OrdersService service = new OrdersService();
+    private final StockProductService stockService = new StockProductService();
+    private final OrderDetailDao orderDetailDao = new OrderDetailDao();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)

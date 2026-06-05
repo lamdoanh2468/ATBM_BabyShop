@@ -80,10 +80,14 @@ public class OrdersService {
     }
 
     public boolean isVerified(int orderId) {
-        return false;
+        Order o = dao.getOrderById(orderId);
+        if (o == null) return false;
+        return o.getStatusOrder() == OrderStatus.VERIFIED || o.getStatusOrder() == OrderStatus.DONE;
     }
 
     public boolean isOwner(int orderId, int accountId) {
-        return false;
+        Order o = dao.getOrderById(orderId);
+        if (o == null) return false;
+        return o.getAccountId() == accountId;
     }
 }
