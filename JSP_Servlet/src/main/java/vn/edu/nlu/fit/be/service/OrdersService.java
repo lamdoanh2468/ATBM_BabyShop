@@ -90,4 +90,8 @@ public class OrdersService {
         if (o == null) return false;
         return o.getAccountId() == accountId;
     }
+
+    public List<OrderDetail> getOrderDetailsByOrderId(int orderId) {
+        return dao.getOrderDetailsByOrderId(orderId);
+    }
 }

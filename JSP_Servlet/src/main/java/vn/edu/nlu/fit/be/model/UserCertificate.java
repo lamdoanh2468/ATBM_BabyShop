@@ -10,6 +10,7 @@ public class UserCertificate {
     private CertificateStatus status;
     private Timestamp createdAt;
     private Timestamp expiresAt;
+    private Timestamp lostAt;
     private Timestamp revokedAt;
     private String revokeReason;
 
@@ -69,10 +70,16 @@ public class UserCertificate {
         this.expiresAt = expiresAt;
     }
 
+    public Timestamp getLostAt() {
+        return lostAt;
+    }
     public Timestamp getRevokedAt() {
         return revokedAt;
     }
 
+    public void setLostAt(Timestamp lostAt) {
+        this.lostAt = lostAt;
+    }
     public void setRevokedAt(Timestamp revokedAt) {
         this.revokedAt = revokedAt;
     }

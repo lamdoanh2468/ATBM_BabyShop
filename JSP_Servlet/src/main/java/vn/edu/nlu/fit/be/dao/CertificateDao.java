@@ -1,5 +1,6 @@
 package vn.edu.nlu.fit.be.dao;
 
+import vn.edu.nlu.fit.be.model.Certificate;
 import vn.edu.nlu.fit.be.model.CertificateStatus;
 import vn.edu.nlu.fit.be.model.UserCertificate;
 
@@ -8,6 +9,20 @@ import java.util.Optional;
 
 public class CertificateDao extends BaseDao {
 
+    public Optional<UserCertificate> findByAccountId(int accountId) {
+        String sql = """
+                SELECT certificate_id, account_id, public_key_pem, certificate_pem, status,
+                       created_at, expires_at, revoked_at, revoke_reason
+                FROM certificates
+                WHERE account_id = :accountId
+                ORDER BY certificate_id DESC
+                LIMIT 1
+                """;
+        return jdbi.withHandle(handle -> handle.createQuery(sql)
+                .bind("accountId", accountId)
+                .mapToBean(UserCertificate.class)
+                .findOne());
+    }
     public Optional<UserCertificate> findActiveByAccountId(int accountId) {
         String sql = """
                 SELECT certificate_id, account_id, public_key_pem, certificate_pem, status,
@@ -26,7 +41,7 @@ public class CertificateDao extends BaseDao {
                 .findOne());
     }
 
-    public Optional<UserCertificate> findById(int certificateId) {
+    public Optional<UserCertificate> findCertById(int certificateId) {
         String sql = """
                 SELECT certificate_id, account_id, public_key_pem, certificate_pem, status,
                        created_at, expires_at, revoked_at, revoke_reason
@@ -55,6 +70,7 @@ public class CertificateDao extends BaseDao {
                 .mapToBean(UserCertificate.class)
                 .list());
     }
+
 
     public int create(int accountId, String publicKeyPem, String certificatePem) {
         String sql = """
@@ -103,5 +119,31 @@ public class CertificateDao extends BaseDao {
 
     public boolean isUsable(UserCertificate certificate) {
         return certificate != null && certificate.getStatus() == CertificateStatus.ACTIVE;
+    }
+
+    public long createCertificate(Certificate model) {
+        return jdbi.withHandle(handle -> handle.createUpdate("""
+                        INSERT INTO certificates (account_id, public_key_pem, certificate_pem, status, created_at, expires_at)
+                        VALUES (:accountId, :publicKeyPem, :certificatePem, 'ACTIVE', NOW(), DATE_ADD(NOW(), INTERVAL 365 DAY))
+                        """)
+                .bind("accountId", model.getAccountId())
+                .bind("publicKeyPem", model.getPublicKeyPem())
+                .bind("certificatePem", model.getCertificatePem())
+                .executeAndReturnGeneratedKeys("certificate_id")
+                .mapTo(Long.class)
+                .one());
+    }
+
+    public List<Certificate> findRecentRevoked(int i) {
+        return jdbi.withHandle(handle -> handle.createQuery("""
+                        SELECT certificate_id, account_id, public_key_pem, certificate_pem, status, created_at, expires_at, revoked_at, revoke_reason
+                        FROM certificates
+                        WHERE status = 'REVOKED'
+                        ORDER BY revoked_at DESC
+                        LIMIT :i
+                        """)
+                .bind("i", i)
+                .mapToBean(Certificate.class)
+                .list());
     }
 }

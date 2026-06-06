@@ -4,6 +4,7 @@ import vn.edu.nlu.fit.be.dao.OrderSignDao;
 import vn.edu.nlu.fit.be.dto.OrderToSignRes;
 import vn.edu.nlu.fit.be.dto.SignPackageRes;
 import vn.edu.nlu.fit.be.model.Order;
+import vn.edu.nlu.fit.be.model.OrderDetail;
 import vn.edu.nlu.fit.be.model.OrderSign;
 
 import java.io.IOException;
@@ -11,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.util.Formatter;
+import java.util.List;
 
 public class OrderSigningService {
 
@@ -21,6 +23,9 @@ public class OrderSigningService {
     public void createOrderSignSnapshot(int orderId, int accountId) {
         Order o = ordersService.getOrderById(orderId);
         if (o == null) throw new IllegalArgumentException("Order not found");
+        if (o.getAccountId() != accountId)
+            throw new IllegalArgumentException("Not your order");
+        List<OrderDetail> ods = ordersService.getOrderDetailsByOrderId(orderId);
 
         // build deterministic snapshot string
         StringBuilder sb = new StringBuilder();
@@ -28,7 +33,15 @@ public class OrderSigningService {
         sb.append("accountId=").append(o.getAccountId()).append(";");
         sb.append("total=").append(o.getTotalAmount()).append(";");
         sb.append("address=").append(o.getDeliveryAddress()).append(";");
-        // Note: order details table not joined here; include basic order summary only
+        sb.append("details=["+"\t");
+        for (OrderDetail od : ods) {
+            sb.append("[\t");
+            sb.append("productId=").append(od.getProductId()).append(";");
+            sb.append("quantity=").append(od.getQuantity()).append(";");
+            sb.append("price=").append(od.getUnitPrice()).append(";");
+            sb.append("]\t");
+        }
+        sb.append("]");
 
         String snapshot = sb.toString();
         String hash = sha256Hex(snapshot);
@@ -53,25 +66,36 @@ public class OrderSigningService {
     }
 
     public OrderToSignRes getOrderToSign(int orderId, int accountId) {
-        OrderSign s = orderSignDao.findByOrderId(orderId);
-        if (s == null) return null;
-        OrderToSignRes r = new OrderToSignRes();
-        r.setOrderId(orderId);
-        r.setOrderHash(s.getOrderHash());
-        r.setSnapshotJson(s.getSnapshotJson());
-        r.setHashAlgorithm(s.getHashAlgorithm());
-        return r;
+        OrderSign sign = orderSignDao.findByOrderId(orderId);
+        if (sign == null) return null;
+        OrderToSignRes signRes = new OrderToSignRes();
+        signRes.setOrderId(orderId);
+        signRes.setOrderHash(sign.getOrderHash());
+        signRes.setSnapshotJson(sign.getSnapshotJson());
+        signRes.setHashAlgorithm(sign.getHashAlgorithm());
+        return signRes;
     }
 
     public String consumePrivateKeyPem(int orderId, int accountId) {
-        Path pemPath = privateKeyDir.resolve("order_" + orderId + "_private.pem");
+        Order order = ordersService.getOrderById(orderId);
+
+        if (order == null) {
+            throw new IllegalArgumentException("Order not found");
+        }
+        if (order.getAccountId() != accountId) {
+            throw new IllegalArgumentException("Not your order");
+        }
+
+        Path pemPath = privateKeyDir.resolve("account_" + accountId + "_private.pem");
         try {
-            if (!Files.exists(pemPath)) return null;
+            if (!Files.exists(pemPath)) {
+                return null;
+            }
             String pem = Files.readString(pemPath);
             Files.delete(pemPath);
             return pem;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Cannot consume private key", e);
         }
     }
 

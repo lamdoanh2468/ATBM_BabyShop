@@ -5,25 +5,160 @@ import vn.edu.nlu.fit.be.dao.OrderSignDao;
 import vn.edu.nlu.fit.be.dao.OrderSignatureDao;
 import vn.edu.nlu.fit.be.dto.SignVerifyResult;
 import vn.edu.nlu.fit.be.dto.SignedOrderReq;
-import vn.edu.nlu.fit.be.model.Certificate;
 import vn.edu.nlu.fit.be.model.OrderSign;
 import vn.edu.nlu.fit.be.model.OrderSignature;
+import vn.edu.nlu.fit.be.model.UserCertificate;
 
+import javax.naming.ldap.LdapName;
+import javax.naming.ldap.Rdn;
 import java.io.ByteArrayInputStream;
-import java.security.PublicKey;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.Signature;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
+import java.security.cert.*;
 import java.util.Base64;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 public class SignVerifyService {
 
+    //Constants
+    private static final String DEFAULT_CA_CERT_RESOURCE = "ca/ca-cert.pem";
+    private static final String CA_CERT_PATH_PROPERTY = "furniro.ca.cert.path";
+    private static final String DEFAULT_SIGNATURE_ALGORITHM = "SHA256withRSA";
+    private static final Set<String> ALLOWED_SIGNATURE_ALGORITHMS = Set.of(
+            "SHA256withRSA"
+    );
     private final OrderSignDao orderSignDao = new OrderSignDao();
     private final CertificateDao certificateDao = new CertificateDao();
     private final OrderSignatureDao signatureDao = new OrderSignatureDao();
 
+    private void validateSignedOrderRequest(SignedOrderReq req) {
+        if (req == null) {
+            throw new IllegalArgumentException("Signed order request must not be null");
+        }
+
+        if (req.getOrderId() <= 0) {
+            throw new IllegalArgumentException("Invalid order ID");
+        }
+
+        if (req.getOrderHash() == null || req.getOrderHash().isBlank()) {
+            throw new IllegalArgumentException("Order hash must not be blank");
+        }
+
+        if (req.getSignatureValue() == null || req.getSignatureValue().isBlank()) {
+            throw new IllegalArgumentException("Signature value must not be blank");
+        }
+    }
+    private void verifyCertToAccount(X509Certificate cert, int accountId) throws Exception {
+        String subject = cert.getSubjectX500Principal().getName();
+
+        LdapName ldapName = new LdapName(subject);
+        for (Rdn rdn : ldapName.getRdns()) {
+            if ("UID".equalsIgnoreCase(rdn.getType())) {
+                int certAccountId = Integer.parseInt(rdn.getValue().toString());
+
+                if (certAccountId != accountId) {
+                    throw new SecurityException("Certificate does not belong to this account");
+                }
+                return;
+            }
+        }
+        throw new SecurityException("Certificate does not contain account ID");
+    }
+
+    private void verifyCertSignedByCa(
+            X509Certificate userCert,
+            X509Certificate caCert
+    ) throws Exception {
+        userCert.checkValidity();
+
+        TrustAnchor trustAnchor = new TrustAnchor(caCert, null);
+
+        PKIXParameters params = new PKIXParameters(java.util.Set.of(trustAnchor));
+        params.setRevocationEnabled(false);
+
+        CertificateFactory cf = CertificateFactory.getInstance("X.509");
+        CertPath certPath = cf.generateCertPath(List.of(userCert));
+
+        CertPathValidator validator = CertPathValidator.getInstance("PKIX");
+        validator.validate(certPath, params);
+    }
+
+    private void verifyCertStatusForOrder(
+            UserCertificate cert,
+            OrderSign orderSign
+    ) {
+        String status = cert.getStatus().toString();
+
+        if ("ACTIVE".equals(status)) {
+            return;
+        }
+
+        if ("LOST_KEY".equals(status)) {
+            if (cert.getLostAt() == null) {
+                throw new SecurityException("Lost-key certificate does not contain lostAt");
+            }
+            /*
+             * Nếu đơn hàng được tạo sau thời điểm báo mất khóa
+             * thì không cho verify bằng key cũ nữa.
+             */
+            if (orderSign.getCreatedAt().after(cert.getLostAt())) {
+                throw new SecurityException("Order was created after key was reported lost");
+            }
+            /*
+             * Đơn tạo trước thời điểm mất khóa vẫn có thể verify lịch sử.
+             */
+            return;
+        }
+
+        if ("REVOKED".equals(status)) {
+            throw new SecurityException("Certificate has been revoked");
+        }
+
+        throw new SecurityException("Certificate is not valid for verification");
+    }
+
+    private void persistSignatureRecord(SignedOrderReq req, int accountId, OrderSign sign, String status, String
+            message) {
+        try {
+            OrderSignature orderSign = new OrderSignature();
+            orderSign.setOrderId(req.getOrderId());
+            orderSign.setAccountId(accountId);
+            Optional<UserCertificate> cert = certificateDao.findByAccountId(accountId);
+            orderSign.setCertificateId(cert != null ? cert.get().getCertificateId() : 0);
+            orderSign.setOrderHash(req.getOrderHash());
+            orderSign.setSignatureValue(req.getSignatureValue());
+            orderSign.setSignatureAlgorithm(resolveSignaAlgo(req.getSignatureAlgorithm()));
+            orderSign.setSignedPayloadJson(null);
+            orderSign.setVerifyStatus(status);
+            orderSign.setVerifyMessage(message);
+            signatureDao.insert(orderSign);
+        } catch (Exception ignored) {
+        }
+    }
+
+
+    private X509Certificate parsePemCertificate(String pem) throws Exception {
+        String base64 = pem.replace("-----BEGIN CERTIFICATE-----", "").replace("-----END CERTIFICATE-----", "").replaceAll("\\s+", "");
+        byte[] der = Base64.getDecoder().decode(base64);
+        CertificateFactory cf = CertificateFactory.getInstance("X.509");
+        return (X509Certificate) cf.generateCertificate(new ByteArrayInputStream(der));
+    }
+
+
     public SignVerifyResult verifySignedOrder(SignedOrderReq signedOrder, int accountId) {
         SignVerifyResult res = new SignVerifyResult();
+        try {
+            validateSignedOrderRequest(signedOrder);
+        } catch (Exception e) {
+            res.setSuccess(false);
+            res.setMessage("Invalid request: " + e.getMessage());
+            return res;
+        }
 
         OrderSign sign = orderSignDao.findByOrderId(signedOrder.getOrderId());
         if (sign == null) {
@@ -35,75 +170,136 @@ public class SignVerifyService {
         if (!sign.getOrderHash().equals(signedOrder.getOrderHash())) {
             res.setSuccess(false);
             res.setMessage("Order hash mismatch");
-            // persist signature record with failure
-            persistSignatureRecord(signedOrder, accountId, sign, "FAIL_HASH_MISMATCH", "Order hash does not match snapshot");
+            persistSignatureRecord(
+                    signedOrder,
+                    accountId,
+                    sign,
+                    "FAIL_HASH_MISMATCH",
+                    "Order hash does not match snapshot"
+            );
             return res;
         }
 
-        Certificate cert = certificateDao.findActiveByAccountId(accountId);
-        if (cert == null) {
+        Optional<UserCertificate> certOpt = certificateDao.findActiveByAccountId(accountId);
+        if (certOpt.isEmpty()) {
             res.setSuccess(false);
-            res.setMessage("No active certificate for account");
-            persistSignatureRecord(signedOrder, accountId, sign, "FAIL_NO_CERT", "No active certificate");
+            res.setMessage("No certificate for account");
+            persistSignatureRecord(
+                    signedOrder,
+                    accountId,
+                    sign,
+                    "FAIL_NO_CERT",
+                    "No certificate"
+            );
             return res;
         }
+
+        UserCertificate userCert = certOpt.get();
 
         try {
-            X509Certificate x509 = parsePemCertificate(cert.getCertificatePem());
-            PublicKey pk = x509.getPublicKey();
+            X509Certificate x509 = parsePemCertificate(userCert.getCertificatePem());
 
-            String alg = signedOrder.getSignatureAlgorithm();
-            if (alg == null || alg.isEmpty()) alg = "SHA256withRSA";
+            X509Certificate caCert = loadCACertificate();
 
-            Signature verifier = Signature.getInstance(alg);
-            verifier.initVerify(pk);
-            byte[] payload = signedOrder.getOrderHash().getBytes(java.nio.charset.StandardCharsets.UTF_8);
+            verifyCertSignedByCa(x509, caCert);
+            verifyCertToAccount(x509, accountId);
+            verifyCertStatusForOrder(userCert, sign);
+
+            String algoritm = resolveSignaAlgo(signedOrder.getSignatureAlgorithm());
+
+            Signature verifier = Signature.getInstance(algoritm);
+            verifier.initVerify(x509.getPublicKey());
+
+            byte[] payload = sign.getOrderHash()
+                    .getBytes(StandardCharsets.UTF_8);
+
             verifier.update(payload);
 
-            byte[] sigBytes = Base64.getDecoder().decode(signedOrder.getSignatureValue());
+            byte[] sigBytes = Base64.getDecoder()
+                    .decode(signedOrder.getSignatureValue());
+
             boolean ok = verifier.verify(sigBytes);
 
             if (ok) {
                 res.setSuccess(true);
                 res.setMessage("Signature verified");
-                persistSignatureRecord(signedOrder, accountId, sign, "VERIFIED", "OK");
+
+                persistSignatureRecord(
+                        signedOrder,
+                        accountId,
+                        sign,
+                        "VERIFIED",
+                        "OK"
+                );
+
                 orderSignDao.updateStatus(sign.getOrderSignId(), "VERIFIED");
             } else {
                 res.setSuccess(false);
                 res.setMessage("Signature verification failed");
-                persistSignatureRecord(signedOrder, accountId, sign, "FAIL_INVALID_SIG", "Invalid signature");
+
+                persistSignatureRecord(
+                        signedOrder,
+                        accountId,
+                        sign,
+                        "FAIL_INVALID_SIG",
+                        "Invalid signature"
+                );
             }
+
             return res;
         } catch (Exception e) {
             res.setSuccess(false);
             res.setMessage("Verification error: " + e.getMessage());
-            persistSignatureRecord(signedOrder, accountId, sign, "FAIL_ERROR", e.getMessage());
+
+            persistSignatureRecord(
+                    signedOrder,
+                    accountId,
+                    sign,
+                    "FAIL_ERROR",
+                    e.getMessage()
+            );
+
             return res;
         }
     }
 
-    private void persistSignatureRecord(SignedOrderReq req, int accountId, OrderSign sign, String status, String message) {
-        try {
-            OrderSignature s = new OrderSignature();
-            s.setOrderId(req.getOrderId());
-            s.setAccountId(accountId);
-            Certificate c = certificateDao.findActiveByAccountId(accountId);
-            s.setCertificateId(c == null ? 0 : c.getCertificateId());
-            s.setOrderHash(req.getOrderHash());
-            s.setSignatureValue(req.getSignatureValue());
-            s.setSignatureAlgorithm(req.getSignatureAlgorithm());
-            s.setSignedPayloadJson(null);
-            s.setVerifyStatus(status);
-            s.setVerifyMessage(message);
-            signatureDao.insert(s);
-        } catch (Exception ignored) {
+    private String resolveSignaAlgo(String signAlgor) {
+        if (signAlgor == null || signAlgor.isBlank()) {
+            return DEFAULT_SIGNATURE_ALGORITHM;
+        }
+
+        String normalizedAlgo = signAlgor.trim();
+
+        if (!ALLOWED_SIGNATURE_ALGORITHMS.contains(normalizedAlgo)) {
+            throw new SecurityException("Unsupported signature algorithm: " + normalizedAlgo);
+        }
+
+        return normalizedAlgo;
+    }
+
+    private X509Certificate loadCACertificate() throws Exception {
+        String caCertPath = System.getProperty(CA_CERT_PATH_PROPERTY);
+
+        if (caCertPath != null && !caCertPath.isBlank()) {
+            try (InputStream in = Files.newInputStream(Path.of(caCertPath))) {
+                String pem = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+                return parsePemCertificate(pem);
+            }
+        }
+
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+
+        try (InputStream in = classLoader.getResourceAsStream(DEFAULT_CA_CERT_RESOURCE)) {
+            if (in == null) {
+                throw new IllegalStateException(
+                        "CA certificate not found in classpath: " + DEFAULT_CA_CERT_RESOURCE
+                );
+            }
+
+            String pem = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+            return parsePemCertificate(pem);
         }
     }
 
-    private X509Certificate parsePemCertificate(String pem) throws Exception {
-        String base64 = pem.replaceAll("-----BEGIN CERTIFICATE-----", "").replaceAll("-----END CERTIFICATE-----", "").replaceAll("\\s+", "");
-        byte[] der = Base64.getDecoder().decode(base64);
-        CertificateFactory cf = CertificateFactory.getInstance("X.509");
-        return (X509Certificate) cf.generateCertificate(new ByteArrayInputStream(der));
-    }
 }
+

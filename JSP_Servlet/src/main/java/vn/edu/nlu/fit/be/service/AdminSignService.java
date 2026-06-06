@@ -10,6 +10,7 @@ import vn.edu.nlu.fit.be.dto.SignVerifyResult;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 public class AdminSignService {
 
@@ -24,7 +25,7 @@ public class AdminSignService {
         return orderSignDao.findByOrderId(orderId);
     }
 
-    public Certificate getCertificateByOrderId(int orderId) {
+    public Optional<UserCertificate> getCertificateByOrderId(int orderId) {
         OrderSign s = orderSignDao.findByOrderId(orderId);
         if (s == null) return null;
         return certificateDao.findActiveByAccountId((int) s.getAccountId());
@@ -78,7 +79,7 @@ public class AdminSignService {
     }
 
     public void revokeCert(int certificateId, String reason) {
-        certificateDao.revoke(certificateId, reason);
+        certificateDao.revokeById(certificateId, reason);
     }
 
     private List<Order> mapSignsToOrders(List<OrderSign> signs) {

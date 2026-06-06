@@ -1,22 +1,26 @@
 package vn.edu.nlu.fit.be.service.util;
 
+import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.asn1.x509.BasicConstraints;
+import org.bouncycastle.asn1.x509.Extension;
+import org.bouncycastle.asn1.x509.KeyUsage;
 import org.bouncycastle.cert.X509CertificateHolder;
-import org.bouncycastle.cert.X509v3CertificateBuilder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
+import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.openssl.PEMKeyPair;
+import org.bouncycastle.openssl.PEMParser;
+import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 
 import java.io.StringWriter;
 import java.math.BigInteger;
-import java.security.GeneralSecurityException;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.PrivateKey;
-import java.security.SecureRandom;
-import java.security.Security;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.*;
 import java.security.cert.X509Certificate;
 import java.util.Base64;
 import java.util.Date;
@@ -39,61 +43,37 @@ public class CryptoUtil {
         return keyPairGenerator.generateKeyPair();
     }
 
-    public static X509Certificate generateSelfSignedCertificate(KeyPair keyPair, String dn, int days)
-            throws Exception {
+    public static String toPemPublicKey(PublicKey key) {
+        String b64 = Base64.getEncoder().encodeToString(key.getEncoded());
 
-        long now = System.currentTimeMillis();
-        Date from = new Date(now);
-        Date to = new Date(now + days * 86_400_000L);
-        BigInteger serialNumber = new BigInteger(64, new SecureRandom());
+        StringBuilder builder = new StringBuilder();
+        builder.append("-----BEGIN PUBLIC KEY-----\n");
+        builder.append(wrap(b64));
+        builder.append("-----END PUBLIC KEY-----\n");
 
-        X500Name subject = new X500Name(dn);
-
-        X509v3CertificateBuilder certificateBuilder =
-                new JcaX509v3CertificateBuilder(
-                        subject,
-                        serialNumber,
-                        from,
-                        to,
-                        subject,
-                        keyPair.getPublic()
-                );
-
-        ContentSigner signer = new JcaContentSignerBuilder(SIGNATURE_ALGORITHM)
-                .setProvider(PROVIDER)
-                .build(keyPair.getPrivate());
-
-        X509CertificateHolder certificateHolder = certificateBuilder.build(signer);
-
-        X509Certificate certificate = new JcaX509CertificateConverter()
-                .setProvider(PROVIDER)
-                .getCertificate(certificateHolder);
-
-        certificate.verify(keyPair.getPublic());
-
-        return certificate;
+        return builder.toString();
     }
 
     public static String toPemPrivateKey(PrivateKey key) {
         String b64 = Base64.getEncoder().encodeToString(key.getEncoded());
 
-        StringWriter writer = new StringWriter();
-        writer.append("-----BEGIN PRIVATE KEY-----\n");
-        writer.append(wrap(b64));
-        writer.append("-----END PRIVATE KEY-----\n");
+        StringBuilder builder = new StringBuilder();
+        builder.append("-----BEGIN PRIVATE KEY-----\n");
+        builder.append(wrap(b64));
+        builder.append("-----END PRIVATE KEY-----\n");
 
-        return writer.toString();
+        return builder.toString();
     }
 
     public static String toPemCertificate(X509Certificate certificate) throws Exception {
         String b64 = Base64.getEncoder().encodeToString(certificate.getEncoded());
 
-        StringWriter writer = new StringWriter();
-        writer.append("-----BEGIN CERTIFICATE-----\n");
-        writer.append(wrap(b64));
-        writer.append("-----END CERTIFICATE-----\n");
+        StringBuilder builder = new StringBuilder();
+        builder.append("-----BEGIN CERTIFICATE-----\n");
+        builder.append(wrap(b64));
+        builder.append("-----END CERTIFICATE-----\n");
 
-        return writer.toString();
+        return builder.toString();
     }
 
     private static String wrap(String value) {
@@ -107,5 +87,96 @@ public class CryptoUtil {
         }
 
         return builder.toString();
+    }
+
+    public static X509Certificate loadCertificate(Path path) throws Exception {
+        try (PEMParser pemParser = new PEMParser(Files.newBufferedReader(path))) {
+            Object pemObject = pemParser.readObject();
+            if (pemObject == null) {
+                throw new IllegalArgumentException("Certificate file is empty: " + path);
+            }
+            if (!(pemObject instanceof X509CertificateHolder certificateHolder)) {
+                throw new IllegalArgumentException("Invalid certificate PEM file: " + path);
+            }
+            return new JcaX509CertificateConverter()
+                    .setProvider("BC")
+                    .getCertificate(certificateHolder);
+        }
+    }
+
+    public static PrivateKey loadPrivateKey(Path path) throws Exception {
+        try (PEMParser pemParser = new PEMParser(Files.newBufferedReader(path))) {
+            Object pemObject = pemParser.readObject();
+            if (pemObject == null) {
+                throw new IllegalArgumentException("Private key file is empty: " + path);
+            }
+            JcaPEMKeyConverter converter = new JcaPEMKeyConverter()
+                    .setProvider("BC");
+
+            if (pemObject instanceof PEMKeyPair keyPair) {
+                return converter.getKeyPair(keyPair).getPrivate();
+            }
+
+            if (pemObject instanceof PrivateKeyInfo privateKeyInfo) {
+                return converter.getPrivateKey(privateKeyInfo);
+            }
+
+            throw new IllegalArgumentException("Invalid private key PEM file: " + path);
+
+        }
+    }
+
+    public static X509Certificate genCertSignedByCA(PublicKey pubKey, PrivateKey caPriKey, X509Certificate caCert, String subDn, int validDays)
+            throws Exception {
+        {
+            Date notBefore = new Date();
+            Date notAfter = new Date(System.currentTimeMillis() + validDays * 24L * 60L * 60L * 1000L);
+
+            BigInteger serial = BigInteger.valueOf(System.currentTimeMillis());
+
+            X500Name issuer = new X500Name(caCert.getSubjectX500Principal().getName());
+            X500Name subject = new X500Name(subDn);
+
+            JcaX509v3CertificateBuilder certBuilder = new JcaX509v3CertificateBuilder(
+                    issuer,
+                    serial,
+                    notBefore,
+                    notAfter,
+                    subject,
+                    pubKey
+            );
+
+            certBuilder.addExtension(
+                    Extension.basicConstraints,
+                    true,
+                    new BasicConstraints(false)
+            );
+
+            certBuilder.addExtension(
+                    Extension.keyUsage,
+                    true,
+                    new KeyUsage(KeyUsage.digitalSignature | KeyUsage.nonRepudiation)
+            );
+
+            certBuilder.addExtension(
+                    Extension.subjectKeyIdentifier,
+                    false,
+                    new JcaX509ExtensionUtils().createSubjectKeyIdentifier(pubKey)
+            );
+
+            certBuilder.addExtension(
+                    Extension.authorityKeyIdentifier,
+                    false,
+                    new JcaX509ExtensionUtils().createAuthorityKeyIdentifier(caCert)
+            );
+
+            ContentSigner signer = new JcaContentSignerBuilder("SHA256withRSA")
+                    .build(caPriKey);
+
+            X509CertificateHolder holder = certBuilder.build(signer);
+
+            return new JcaX509CertificateConverter()
+                    .getCertificate(holder);
+        }
     }
 }
