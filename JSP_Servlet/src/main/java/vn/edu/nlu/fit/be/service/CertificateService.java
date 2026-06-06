@@ -3,7 +3,7 @@ package vn.edu.nlu.fit.be.service;
 import vn.edu.nlu.fit.be.dao.CertificateDao;
 import vn.edu.nlu.fit.be.model.Certificate;
 import vn.edu.nlu.fit.be.model.UserCertificate;
-import vn.edu.nlu.fit.be.service.util.CryptoUtil;
+import vn.edu.nlu.fit.be.util.CryptoUtil;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -57,7 +57,7 @@ public class CertificateService {
             certificate.setPublicKeyPem(
                     "-----BEGIN PUBLIC KEY-----\n" + java.util.Base64.getEncoder().encodeToString(userKeyPair.getPublic().getEncoded())
                             + "\n-----END PUBLIC KEY-----\n");
-            certificate.setCertificatePem(CryptoUtil.toPemCertificate(caCert));
+            certificate.setCertificatePem(CryptoUtil.toPemCertificate(userCert));
             certificate.setSerialNumber(Long.toString(userCert.getSerialNumber().longValue()));
             certificate.setStatus("Active");
             certificate.setIssuedAt(new Timestamp(new Date().getTime()));
@@ -78,7 +78,7 @@ public class CertificateService {
         return c.map(UserCertificate::getCertificatePem).orElse(null);
     }
 
-    public void ensureActiveCert(int accountId) {
+    public void ensureActiveCert(int accountId) throws Exception {
         Optional<UserCertificate> c = dao.findActiveByAccountId(accountId);
         if (c.isEmpty()) {
             createNewCertAccount(accountId);

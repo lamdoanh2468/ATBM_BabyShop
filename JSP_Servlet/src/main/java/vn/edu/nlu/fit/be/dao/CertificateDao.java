@@ -12,7 +12,7 @@ public class CertificateDao extends BaseDao {
     public Optional<UserCertificate> findByAccountId(int accountId) {
         String sql = """
                 SELECT certificate_id, account_id, public_key_pem, certificate_pem, status,
-                       created_at, expires_at, revoked_at, revoke_reason
+                       created_at, expires_at,lost_at, revoked_at, revoke_reason
                 FROM certificates
                 WHERE account_id = :accountId
                 ORDER BY certificate_id DESC
@@ -23,10 +23,11 @@ public class CertificateDao extends BaseDao {
                 .mapToBean(UserCertificate.class)
                 .findOne());
     }
+
     public Optional<UserCertificate> findActiveByAccountId(int accountId) {
         String sql = """
                 SELECT certificate_id, account_id, public_key_pem, certificate_pem, status,
-                       created_at, expires_at, revoked_at, revoke_reason
+                       created_at, expires_at, revoked_at,lost_at, revoke_reason
                 FROM certificates
                 WHERE account_id = :accountId
                   AND status = 'ACTIVE'
@@ -41,16 +42,17 @@ public class CertificateDao extends BaseDao {
                 .findOne());
     }
 
-    public Optional<UserCertificate> findCertById(int certificateId) {
+    public Optional<UserCertificate> findByCertIdAccID(int certificateId, int accountId) {
         String sql = """
                 SELECT certificate_id, account_id, public_key_pem, certificate_pem, status,
-                       created_at, expires_at, revoked_at, revoke_reason
+                       created_at, expires_at, revoked_at, lost_at, revoke_reason
                 FROM certificates
                 WHERE certificate_id = :certificateId
+                  AND account_id = :accountId
                 """;
-
         return jdbi.withHandle(handle -> handle.createQuery(sql)
                 .bind("certificateId", certificateId)
+                .bind("accountId", accountId)
                 .mapToBean(UserCertificate.class)
                 .findOne());
     }
@@ -58,7 +60,7 @@ public class CertificateDao extends BaseDao {
     public List<UserCertificate> findRevokedByAccountId(int accountId) {
         String sql = """
                 SELECT certificate_id, account_id, public_key_pem, certificate_pem, status,
-                       created_at, expires_at, revoked_at, revoke_reason
+                       created_at, expires_at, revoked_at, lost_at, revoke_reason
                 FROM certificates
                 WHERE account_id = :accountId
                   AND status = 'REVOKED'

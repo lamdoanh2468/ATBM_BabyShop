@@ -129,7 +129,7 @@ public class SignVerifyService {
             orderSign.setOrderId(req.getOrderId());
             orderSign.setAccountId(accountId);
             Optional<UserCertificate> cert = certificateDao.findByAccountId(accountId);
-            orderSign.setCertificateId(cert != null ? cert.get().getCertificateId() : 0);
+            orderSign.setCertificateId(req.getCertificateId());
             orderSign.setOrderHash(req.getOrderHash());
             orderSign.setSignatureValue(req.getSignatureValue());
             orderSign.setSignatureAlgorithm(resolveSignaAlgo(req.getSignatureAlgorithm()));
@@ -166,6 +166,11 @@ public class SignVerifyService {
             res.setMessage("No sign snapshot found for order");
             return res;
         }
+        if (sign.getAccountId() != accountId) {
+            res.setSuccess(false);
+            res.setMessage("Order does not belong to this account");
+            return res;
+        }
 
         if (!sign.getOrderHash().equals(signedOrder.getOrderHash())) {
             res.setSuccess(false);
@@ -180,7 +185,7 @@ public class SignVerifyService {
             return res;
         }
 
-        Optional<UserCertificate> certOpt = certificateDao.findActiveByAccountId(accountId);
+        Optional<UserCertificate> certOpt = certificateDao.findByCertIdAccID(signedOrder.getCertificateId(), accountId);
         if (certOpt.isEmpty()) {
             res.setSuccess(false);
             res.setMessage("No certificate for account");

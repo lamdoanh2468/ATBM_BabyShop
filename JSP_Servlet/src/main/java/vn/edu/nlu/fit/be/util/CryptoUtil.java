@@ -1,4 +1,4 @@
-package vn.edu.nlu.fit.be.service.util;
+package vn.edu.nlu.fit.be.util;
 
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.asn1.x500.X500Name;
@@ -16,7 +16,6 @@ import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 
-import java.io.StringWriter;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;

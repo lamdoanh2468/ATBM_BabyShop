@@ -6,11 +6,11 @@ public class OrderSignDao extends BaseDao {
 
     public long insert(OrderSign sign) {
         String sql = """
-            INSERT INTO order_signs
-                (order_id, account_id, snapshot_json, order_hash, hash_algorithm, status, created_at)
-            VALUES
-                (:orderId, :accountId, :snapshotJson, :orderHash, :hashAlgorithm, :status, NOW())
-        """;
+                    INSERT INTO order_signs
+                        (order_id, account_id, snapshot_json, order_hash, hash_algorithm, status, created_at)
+                    VALUES
+                        (:orderId, :accountId, :snapshotJson, :orderHash, :hashAlgorithm, :status, NOW())
+                """;
 
         return jdbi.withHandle(handle ->
                 handle.createUpdate(sql)
@@ -47,7 +47,12 @@ public class OrderSignDao extends BaseDao {
     }
 
     public boolean updateStatus(long orderSignId, String status) {
-        String sql = "UPDATE order_signs SET status = :status WHERE order_sign_id = :id";
+        String sql = """
+                    UPDATE order_signs
+                    SET status = :status,
+                        verified_at = CASE WHEN :status = 'VERIFIED' THEN NOW() ELSE verified_at END
+                    WHERE order_sign_id = :id
+                """;
         return jdbi.withHandle(handle ->
                 handle.createUpdate(sql).bind("status", status).bind("id", orderSignId).execute()
         ) > 0;

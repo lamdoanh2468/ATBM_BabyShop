@@ -2,6 +2,7 @@ package vn.edu.nlu.fit.be.dto;
 
 public class SignedOrderReq {
 	private int orderId;
+	private int certificateId;
 	private String orderHash;
 	private String signatureValue; // base64
 	private String signatureAlgorithm;
@@ -14,10 +15,16 @@ public class SignedOrderReq {
 		this.orderId = orderId;
 	}
 
+	public int getCertificateId() {
+		return certificateId;
+	}
 	public String getOrderHash() {
 		return orderHash;
 	}
 
+	public void setCertificateId(int certificateId) {
+		this.certificateId = certificateId;
+	}
 	public void setOrderHash(String orderHash) {
 		this.orderHash = orderHash;
 	}
