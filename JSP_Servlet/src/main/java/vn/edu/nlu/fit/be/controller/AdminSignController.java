@@ -59,7 +59,11 @@ public class AdminSignController extends HttpServlet {
         String path = request.getServletPath();
         if ("/admin-sign/reverify".equals(path)) {
             int orderId = Integer.parseInt(request.getParameter("orderId"));
-            adminSignService.reverifyOrder(orderId);
+            try {
+                adminSignService.reverifyOrder(orderId);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
             response.sendRedirect(request.getContextPath() + "/admin-sign/detail?orderId=" + orderId);
             return;
         }

@@ -52,7 +52,11 @@ public class SignVerifyService {
         if (req.getSignatureValue() == null || req.getSignatureValue().isBlank()) {
             throw new IllegalArgumentException("Signature value must not be blank");
         }
+        if (req.getCertificateId() <= 0) {
+            throw new IllegalArgumentException("Invalid certificate ID");
+        }
     }
+
     private void verifyCertToAccount(X509Certificate cert, int accountId) throws Exception {
         String subject = cert.getSubjectX500Principal().getName();
 
@@ -123,12 +127,11 @@ public class SignVerifyService {
     }
 
     private void persistSignatureRecord(SignedOrderReq req, int accountId, OrderSign sign, String status, String
-            message) {
+            message) throws Exception {
         try {
             OrderSignature orderSign = new OrderSignature();
             orderSign.setOrderId(req.getOrderId());
             orderSign.setAccountId(accountId);
-            Optional<UserCertificate> cert = certificateDao.findByAccountId(accountId);
             orderSign.setCertificateId(req.getCertificateId());
             orderSign.setOrderHash(req.getOrderHash());
             orderSign.setSignatureValue(req.getSignatureValue());
@@ -137,7 +140,8 @@ public class SignVerifyService {
             orderSign.setVerifyStatus(status);
             orderSign.setVerifyMessage(message);
             signatureDao.insert(orderSign);
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            throw new Exception("Failed to persist signature record: " + e.getMessage());
         }
     }
 
@@ -150,7 +154,7 @@ public class SignVerifyService {
     }
 
 
-    public SignVerifyResult verifySignedOrder(SignedOrderReq signedOrder, int accountId) {
+    public SignVerifyResult verifySignedOrder(SignedOrderReq signedOrder, int accountId) throws Exception {
         SignVerifyResult res = new SignVerifyResult();
         try {
             validateSignedOrderRequest(signedOrder);

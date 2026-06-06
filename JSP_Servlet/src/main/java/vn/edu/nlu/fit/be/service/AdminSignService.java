@@ -5,6 +5,7 @@ import vn.edu.nlu.fit.be.dao.OrderSignatureDao;
 import vn.edu.nlu.fit.be.dao.OrdersDao;
 import vn.edu.nlu.fit.be.dao.CertificateDao;
 import vn.edu.nlu.fit.be.dao.SignatureAuditDao;
+import vn.edu.nlu.fit.be.dto.SignedOrderReq;
 import vn.edu.nlu.fit.be.model.*;
 import vn.edu.nlu.fit.be.dto.SignVerifyResult;
 
@@ -54,13 +55,14 @@ public class AdminSignService {
         return certificateDao.findRecentRevoked(20);
     }
 
-    public void reverifyOrder(int orderId) {
+    public void reverifyOrder(int orderId) throws Exception {
         // Admin-triggered reverify: find latest uploaded signature for the order and re-run verify
         OrderSignature lastSig = signatureDao.findLatestByOrderId(orderId);
         if (lastSig == null) return;
 
-        vn.edu.nlu.fit.be.dto.SignedOrderReq req = new vn.edu.nlu.fit.be.dto.SignedOrderReq();
+        SignedOrderReq req = new SignedOrderReq();
         req.setOrderId((int) lastSig.getOrderId());
+        req.setCertificateId((int) lastSig.getCertificateId());
         req.setOrderHash(lastSig.getOrderHash());
         req.setSignatureValue(lastSig.getSignatureValue());
         req.setSignatureAlgorithm(lastSig.getSignatureAlgorithm());

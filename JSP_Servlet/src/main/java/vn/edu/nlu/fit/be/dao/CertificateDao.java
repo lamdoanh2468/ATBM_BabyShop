@@ -119,6 +119,21 @@ public class CertificateDao extends BaseDao {
                 .execute()) > 0;
     }
 
+    public boolean markLostKeyById(int certificateId, String reason) {
+        String sql = """
+                    UPDATE certificates
+                    SET status = 'LOST_KEY',
+                        lost_at = NOW(),
+                        revoke_reason = :reason
+                    WHERE certificate_id = :certificateId
+                      AND status = 'ACTIVE'
+                """;
+        return jdbi.withHandle(handle -> handle.createUpdate(sql)
+                .bind("certificateId", certificateId)
+                .bind("reason", reason)
+                .execute()) > 0;
+    }
+
     public boolean isUsable(UserCertificate certificate) {
         return certificate != null && certificate.getStatus() == CertificateStatus.ACTIVE;
     }

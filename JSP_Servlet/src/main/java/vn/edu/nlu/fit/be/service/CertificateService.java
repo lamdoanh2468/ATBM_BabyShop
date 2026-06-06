@@ -30,9 +30,9 @@ public class CertificateService {
 
     public void revokeActiveCertByLostKey(int accountId, String reason) {
         Optional<UserCertificate> cert = dao.findActiveByAccountId(accountId);
-        if (cert.isPresent()) {
-            dao.revokeById(cert.get().getCertificateId(), reason);
-        }
+        cert.ifPresent(
+                userCertificate ->
+                        dao.markLostKeyById(userCertificate.getCertificateId(), reason));
     }
 
     public void createNewCertAccount(int accountId) throws Exception {
