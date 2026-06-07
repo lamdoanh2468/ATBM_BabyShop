@@ -23,18 +23,20 @@ public class OrderSigningService {
     private final Path privateKeyDir = Path.of("JSP_Servlet", "data", "private_keys");
 
     public void createOrderSignSnapshot(int orderId, int accountId) {
-        Order o = ordersService.getOrderById(orderId);
-        if (o == null) throw new IllegalArgumentException("Order not found");
-        if (o.getAccountId() != accountId)
+        Order order = ordersService.getOrderById(orderId);
+        if (order == null) throw new IllegalArgumentException("Order not found");
+        if (order.getAccountId() != accountId)
             throw new IllegalArgumentException("Not your order");
         List<OrderDetail> ods = ordersService.getOrderDetailsByOrderId(orderId);
 
         // build deterministic snapshot string
         StringBuilder sb = new StringBuilder();
-        sb.append("orderId=").append(o.getOrderId()).append(";");
-        sb.append("accountId=").append(o.getAccountId()).append(";");
-        sb.append("total=").append(o.getTotalAmount()).append(";");
-        sb.append("address=").append(o.getDeliveryAddress()).append(";");
+        sb.append("orderId=").append(order.getOrderId()).append(";");
+        sb.append("accountId=").append(order.getAccountId()).append(";");
+        sb.append("voucherId=").append(order.getVoucherId()).append(";");
+        sb.append("total=").append(order.getTotalAmount()).append(";");
+        sb.append("paymentMethod=").append(order.getPaymentMethod()).append(";");
+        sb.append("address=").append(order.getDeliveryAddress()).append(";");
         sb.append("details=["+"\t");
         for (OrderDetail od : ods) {
             sb.append("[\t");
@@ -62,8 +64,8 @@ public class OrderSigningService {
     public SignPackageRes getSigningPackage(int orderId, int accountId) {
         SignPackageRes res = new SignPackageRes();
         res.setOrderId(orderId);
-        res.setSigningUrl("/sign/download?orderId=" + orderId);
-        res.setPrivateKeyUrl("/sign/private?orderId=" + orderId);
+        res.setSigningUrl("/order-sign/order-json?orderId=" + orderId);
+        res.setPrivateKeyUrl("/order-sign/private-key?orderId=" + orderId);
         return res;
     }
 

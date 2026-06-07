@@ -1,4 +1,5 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -31,13 +32,30 @@
             <h2><i class="fa-solid fa-file-shield" style="color: #6366f1;"></i> Xác minh chữ ký điện tử</h2>
             <p>Vui lòng tải lên file <strong>signed_order.json</strong> mà bạn vừa ký bằng công cụ.</p>
 
-            <form id="uploadForm" onsubmit="handleVerify(event)">
+            <c:if test="${not empty error}">
+                <div class="notice error">
+                    <i class="fa-solid fa-circle-xmark"></i>
+                    ${error}
+                </div>
+            </c:if>
+
+            <c:if test="${not empty verifyResult}">
+                <div class="notice ${verifyResult.success ? 'success' : 'error'}">
+                    <i class="fa-solid ${verifyResult.success ? 'fa-circle-check' : 'fa-circle-xmark'}"></i>
+                    ${verifyResult.message}
+                </div>
+            </c:if>
+
+            <form id="uploadForm"
+                  action="${pageContext.request.contextPath}/signature-upload"
+                  method="post"
+                  enctype="multipart/form-data">
                 <label class="file-drop" id="dropZone" for="signedOrder">
                     <i class="fa-solid fa-cloud-arrow-up"></i>
                     <span id="fileName">Kéo thả file .json vào đây</span>
                     <small>hoặc click để chọn file từ máy tính</small>
                 </label>
-                <input id="signedOrder" type="file" accept=".json" required>
+                <input id="signedOrder" type="file" name="signedOrderFile" accept=".json" required>
 
                 <button type="submit" id="btnSubmit" class="btn-submit" disabled>
                     <i class="fa-solid fa-shield-check"></i> Xác minh & Hoàn tất

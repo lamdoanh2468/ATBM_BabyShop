@@ -81,9 +81,9 @@
                             <div class="form-item">
                                 <label>Trạng thái</label>
                                 <select name="status">
-                                    <option value="Pending" ${order.statusOrder.name() == 'Pending' ? 'selected' : ''}>Pending</option>
-                                    <option value="Done" ${order.statusOrder.name() == 'Done' ? 'selected' : ''}>Done</option>
-                                    <option value="Cancelled" ${order.statusOrder.name() == 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+                                    <option value="PENDING" ${order.statusOrder.name() == 'PENDING' ? 'selected' : ''}>Pending</option>
+                                    <option value="DONE" ${order.statusOrder.name() == 'DONE' ? 'selected' : ''}>Done</option>
+                                    <option value="CANCELLED" ${order.statusOrder.name() == 'CANCELLED' ? 'selected' : ''}>Cancelled</option>
                                 </select>
                             </div>
 

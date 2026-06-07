@@ -88,7 +88,7 @@ public class AdminSignController extends HttpServlet {
 
         Account account = (Account) session.getAttribute("USER");
         if (account.getRole() <= 0) {
-            response.sendRedirect(request.getContextPath() + "/403.jsp");
+            response.sendRedirect(request.getContextPath() + "/error/403.jsp");
             return false;
         }
         return true;

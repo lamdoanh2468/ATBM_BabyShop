@@ -36,7 +36,7 @@ public class SignUploadController extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/login");
             return;
         }
-        request.getRequestDispatcher("/signature_upload.jsp").forward(request, response);
+        request.getRequestDispatcher("/upload-signature.jsp").forward(request, response);
     }
 
     @Override
@@ -54,13 +54,13 @@ public class SignUploadController extends HttpServlet {
         Part filePart = request.getPart("signedOrderFile");
         if (filePart == null || filePart.getSize() == 0) {
             request.setAttribute("error", "Vui lòng upload file signed_order.json");
-            request.getRequestDispatcher("/signature_upload.jsp").forward(request, response);
+            request.getRequestDispatcher("/upload-signature.jsp").forward(request, response);
             return;
         }
 
         if (!isJsonFile(filePart)) {
             request.setAttribute("error", "File không hợp lệ. Chỉ chấp nhận signed_order.json");
-            request.getRequestDispatcher("/signature_upload.jsp").forward(request, response);
+            request.getRequestDispatcher("/upload-signature.jsp").forward(request, response);
             return;
         }
 
@@ -70,13 +70,13 @@ public class SignUploadController extends HttpServlet {
 
             request.setAttribute("verifyResult", result);
             if (result.isSuccess()) {
-                request.getRequestDispatcher("/signature_success.jsp").forward(request, response);
+                request.getRequestDispatcher("/upload-signature.jsp").forward(request, response);
             } else {
-                request.getRequestDispatcher("/signature_upload.jsp").forward(request, response);
+                request.getRequestDispatcher("/upload-signature.jsp").forward(request, response);
             }
         } catch (Exception e) {
             request.setAttribute("error", "Không thể xác thực chữ ký: " + e.getMessage());
-            request.getRequestDispatcher("/signature_upload.jsp").forward(request, response);
+            request.getRequestDispatcher("/upload-signature.jsp").forward(request, response);
         }
     }
 

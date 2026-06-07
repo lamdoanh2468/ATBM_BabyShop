@@ -31,7 +31,7 @@ public class AdminBrandController extends HttpServlet {
 
         //không phải admin
         if (acc.getRole() <= 0) {
-            response.sendRedirect(request.getContextPath() + "/403.jsp");
+            response.sendRedirect(request.getContextPath() + "/error/403.jsp");
             return;
         }
 

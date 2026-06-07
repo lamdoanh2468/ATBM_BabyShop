@@ -39,7 +39,7 @@ public class AccountController extends HttpServlet {
 
         // không phải admin
         if (admin.getRole() <= 0) {
-            resp.sendRedirect(req.getContextPath() + "/403.jsp");
+            resp.sendRedirect(req.getContextPath() + "/error/403.jsp");
             return;
         }
 
@@ -84,7 +84,7 @@ public class AccountController extends HttpServlet {
         Account admin = (Account) session.getAttribute("USER");
 
         if (admin.getRole() <= 0) {
-            resp.sendRedirect(req.getContextPath() + "/403.jsp");
+            resp.sendRedirect(req.getContextPath() + "/error/403.jsp");
             return;
         }
 

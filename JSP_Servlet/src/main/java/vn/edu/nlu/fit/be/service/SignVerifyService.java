@@ -265,6 +265,8 @@ public class SignVerifyService {
                         "FAIL_INVALID_SIG",
                         "Invalid signature"
                 );
+                orderSignDao.updateStatus(sign.getOrderSignId(), "FAIL_INVALID_SIGNATURE");
+                ordersService.updateStatus(signedOrder.getOrderId(), OrderStatus.SIGNATURE_INVALID);
             }
 
             return res;

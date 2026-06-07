@@ -39,7 +39,7 @@ public class CertController extends HttpServlet {
 
         request.setAttribute("certificate", certificateService.getActiveCertByAccountId(account.getAccountId()));
         request.setAttribute("revokedCertificates", certificateService.findRevokedByAccountId(account.getAccountId()));
-        request.getRequestDispatcher("/certificate.jsp").forward(request, response);
+        request.getRequestDispatcher("/security-key.jsp").forward(request, response);
     }
 
     @Override
@@ -59,7 +59,11 @@ public class CertController extends HttpServlet {
         if ("/certificate/report-lost-key".equals(path)) {
             String reason = request.getParameter("reason");
             certificateService.revokeActiveCertByLostKey(account.getAccountId(), reason);
-            certificateService.createNewCertAccount(account.getAccountId());
+            try {
+                certificateService.createNewCertAccount(account.getAccountId());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
             request.setAttribute("message", "Đã báo mất private key. Certificate cũ bị revoke và certificate mới đã được tạo.");
             doGet(request, response);
             return;

@@ -42,7 +42,7 @@ public class AdminOrderController extends HttpServlet {
 
         //không phải admin
         if (acc.getRole() <= 0) {
-            resp.sendRedirect(req.getContextPath() + "/403.jsp");
+            resp.sendRedirect(req.getContextPath() + "/error/403.jsp");
             return;
         }
         String path = req.getServletPath();

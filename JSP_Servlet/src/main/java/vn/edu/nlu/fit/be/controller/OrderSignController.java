@@ -43,13 +43,13 @@ public class OrderSignController extends HttpServlet {
         String path = request.getServletPath();
 
         if ("/order-sign".equals(path)) {
-            request.getRequestDispatcher("/order_sign.jsp").forward(request, response);
+            request.getRequestDispatcher("/order-sign.jsp").forward(request, response);
             return;
         }
 
         int orderId = parseOrderId(request);
         if (!ordersService.isOwner(orderId, account.getAccountId())) {
-            response.sendRedirect(request.getContextPath() + "/403.jsp");
+            response.sendRedirect(request.getContextPath() + "/error/403.jsp");
             return;
         }
 
@@ -73,7 +73,7 @@ public class OrderSignController extends HttpServlet {
         SignPackageRes signingPackage = orderSigningService.getSigningPackage(orderId, account.getAccountId());
         request.setAttribute("signingPackage", signingPackage);
         request.setAttribute("orderId", orderId);
-        request.getRequestDispatcher("/order_sign_package.jsp").forward(request, response);
+        request.getRequestDispatcher("/order-sign.jsp").forward(request, response);
     }
 
     private void downloadOrderToSignJson(HttpServletResponse response, int orderId, Account account) throws IOException {

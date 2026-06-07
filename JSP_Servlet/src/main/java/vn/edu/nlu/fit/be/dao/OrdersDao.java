@@ -29,7 +29,7 @@ public class OrdersDao extends BaseDao {
             int orderId = handle.createUpdate(insertOrderSql)
                     .bind("accountId", o.getAccountId())
                     .bind("voucherId", o.getVoucherId() == 0 ? null : o.getVoucherId())
-                    .bind("status", o.getStatusOrder().name())
+                    .bind("status", o.getStatusOrder().getDbValue())
                     .bind("totalAmount", o.getTotalAmount())
                     .bind("deliveryAddress", o.getDeliveryAddress())
                     .bind("paymentMethod", o.getPaymentMethod().name())
@@ -84,9 +84,7 @@ public class OrdersDao extends BaseDao {
                             o.setPaymentMethod(
                                     pm == null ? PaymentMethod.COD : PaymentMethod.valueOf(pm.trim())
                             );
-                            o.setStatusOrder(
-                                    OrderStatus.valueOf(rs.getString("statusOrder"))
-                            );
+                            o.setStatusOrder(OrderStatus.fromDbValue(rs.getString("statusOrder")));
                             o.setUsername(rs.getString("username"));
                             return o;
                         })
@@ -124,7 +122,7 @@ public class OrdersDao extends BaseDao {
                             o.setDeliveryAddress(rs.getString("deliveryAddress"));
                             String pm = rs.getString("paymentMethod");
                             o.setPaymentMethod(pm == null ? PaymentMethod.COD : PaymentMethod.valueOf(pm.trim()));
-                            o.setStatusOrder(OrderStatus.valueOf(rs.getString("statusOrder")));
+                            o.setStatusOrder(OrderStatus.fromDbValue(rs.getString("statusOrder")));
                             o.setUsername(rs.getString("username"));
                             return o;
                         })
@@ -140,7 +138,7 @@ public class OrdersDao extends BaseDao {
 
         return jdbi.withHandle(handle ->
                 handle.createUpdate(sql)
-                        .bind("st", status.name())
+                        .bind("st", status.getDbValue())
                         .bind("id", orderId)
                         .execute()
         ) > 0;
@@ -170,7 +168,7 @@ public class OrdersDao extends BaseDao {
                 handle.createUpdate(sql)
                         .bind("deliveryAddress", order.getDeliveryAddress())
                         .bind("paymentMethod", order.getPaymentMethod().name())
-                        .bind("status", order.getStatusOrder().name())
+                        .bind("status", order.getStatusOrder().getDbValue())
                         .bind("orderId", order.getOrderId())
                         .execute()
         ) > 0;
