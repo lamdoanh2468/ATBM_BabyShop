@@ -6,6 +6,7 @@ import vn.edu.nlu.fit.be.dto.SignPackageRes;
 import vn.edu.nlu.fit.be.model.Order;
 import vn.edu.nlu.fit.be.model.OrderDetail;
 import vn.edu.nlu.fit.be.model.OrderSign;
+import vn.edu.nlu.fit.be.model.UserCertificate;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -17,6 +18,7 @@ import java.util.List;
 public class OrderSigningService {
 
     private final OrdersService ordersService = new OrdersService();
+    private final CertificateService certificateService = new CertificateService();
     private final OrderSignDao orderSignDao = new OrderSignDao();
     private final Path privateKeyDir = Path.of("JSP_Servlet", "data", "private_keys");
 
@@ -68,8 +70,13 @@ public class OrderSigningService {
     public OrderToSignRes getOrderToSign(int orderId, int accountId) {
         OrderSign sign = orderSignDao.findByOrderId(orderId);
         if (sign == null) return null;
+
+        UserCertificate cert = certificateService.getActiveCertByAccountId(accountId)
+                .orElseThrow(() -> new IllegalStateException("No active certificate"));
+
         OrderToSignRes signRes = new OrderToSignRes();
         signRes.setOrderId(orderId);
+        signRes.setCertificateId(cert.getCertificateId());
         signRes.setOrderHash(sign.getOrderHash());
         signRes.setSnapshotJson(sign.getSnapshotJson());
         signRes.setHashAlgorithm(sign.getHashAlgorithm());

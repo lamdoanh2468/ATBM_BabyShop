@@ -57,23 +57,23 @@ public class AdminSignService {
 
     public void reverifyOrder(int orderId) throws Exception {
         // Admin-triggered reverify: find latest uploaded signature for the order and re-run verify
-        OrderSignature lastSig = signatureDao.findLatestByOrderId(orderId);
-        if (lastSig == null) return;
+        OrderSignature lastSign = signatureDao.findLatestByOrderId(orderId);
+        if (lastSign == null) return;
 
         SignedOrderReq req = new SignedOrderReq();
-        req.setOrderId((int) lastSig.getOrderId());
-        req.setCertificateId((int) lastSig.getCertificateId());
-        req.setOrderHash(lastSig.getOrderHash());
-        req.setSignatureValue(lastSig.getSignatureValue());
-        req.setSignatureAlgorithm(lastSig.getSignatureAlgorithm());
+        req.setOrderId((int) lastSign.getOrderId());
+        req.setCertificateId((int) lastSign.getCertificateId());
+        req.setOrderHash(lastSign.getOrderHash());
+        req.setSignatureValue(lastSign.getSignatureValue());
+        req.setSignatureAlgorithm(lastSign.getSignatureAlgorithm());
 
-        SignVerifyResult result = verifyService.verifySignedOrder(req, (int) lastSig.getAccountId());
+        SignVerifyResult result = verifyService.verifySignedOrder(req, (int) lastSign.getAccountId());
 
         // write an audit log for admin action
         SignatureAuditLog log = new SignatureAuditLog();
         log.setOrderId((long) orderId);
-        log.setAccountId(lastSig.getAccountId());
-        log.setCertificateId(lastSig.getCertificateId());
+        log.setAccountId(lastSign.getAccountId());
+        log.setCertificateId(lastSign.getCertificateId());
         log.setAction("ADMIN_REVERIFY");
         log.setResult(result.isSuccess() ? "VERIFIED" : "FAILED");
         log.setMessage(result.getMessage());

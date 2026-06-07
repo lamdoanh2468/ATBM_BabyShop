@@ -7,6 +7,7 @@ import vn.edu.nlu.fit.be.dto.SignVerifyResult;
 import vn.edu.nlu.fit.be.dto.SignedOrderReq;
 import vn.edu.nlu.fit.be.model.OrderSign;
 import vn.edu.nlu.fit.be.model.OrderSignature;
+import vn.edu.nlu.fit.be.model.OrderStatus;
 import vn.edu.nlu.fit.be.model.UserCertificate;
 
 import javax.naming.ldap.LdapName;
@@ -26,12 +27,14 @@ import java.util.Set;
 public class SignVerifyService {
 
     //Constants
-    private static final String DEFAULT_CA_CERT_RESOURCE = "ca/ca-cert.pem";
+    private static final String DEFAULT_CA_CERT_RESOURCE = "ca/ca_certificate.pem";
     private static final String CA_CERT_PATH_PROPERTY = "furniro.ca.cert.path";
     private static final String DEFAULT_SIGNATURE_ALGORITHM = "SHA256withRSA";
     private static final Set<String> ALLOWED_SIGNATURE_ALGORITHMS = Set.of(
             "SHA256withRSA"
     );
+    private final OrdersService ordersService = new OrdersService();
+
     private final OrderSignDao orderSignDao = new OrderSignDao();
     private final CertificateDao certificateDao = new CertificateDao();
     private final OrderSignatureDao signatureDao = new OrderSignatureDao();
@@ -129,13 +132,20 @@ public class SignVerifyService {
     private void persistSignatureRecord(SignedOrderReq req, int accountId, OrderSign sign, String status, String
             message) throws Exception {
         try {
+            String rawAlgo = req.getSignatureAlgorithm();
             OrderSignature orderSign = new OrderSignature();
             orderSign.setOrderId(req.getOrderId());
             orderSign.setAccountId(accountId);
             orderSign.setCertificateId(req.getCertificateId());
             orderSign.setOrderHash(req.getOrderHash());
             orderSign.setSignatureValue(req.getSignatureValue());
-            orderSign.setSignatureAlgorithm(resolveSignaAlgo(req.getSignatureAlgorithm()));
+
+            orderSign.setSignatureAlgorithm(
+                    rawAlgo == null || rawAlgo.isBlank()
+                            ? DEFAULT_SIGNATURE_ALGORITHM
+                            : rawAlgo.trim()
+            );
+
             orderSign.setSignedPayloadJson(null);
             orderSign.setVerifyStatus(status);
             orderSign.setVerifyMessage(message);
@@ -214,9 +224,9 @@ public class SignVerifyService {
             verifyCertToAccount(x509, accountId);
             verifyCertStatusForOrder(userCert, sign);
 
-            String algoritm = resolveSignaAlgo(signedOrder.getSignatureAlgorithm());
+            String algorithm = resolveSignaAlgo(signedOrder.getSignatureAlgorithm());
 
-            Signature verifier = Signature.getInstance(algoritm);
+            Signature verifier = Signature.getInstance(algorithm);
             verifier.initVerify(x509.getPublicKey());
 
             byte[] payload = sign.getOrderHash()
@@ -224,12 +234,12 @@ public class SignVerifyService {
 
             verifier.update(payload);
 
-            byte[] sigBytes = Base64.getDecoder()
+            byte[] signBytes = Base64.getDecoder()
                     .decode(signedOrder.getSignatureValue());
 
-            boolean ok = verifier.verify(sigBytes);
+            boolean isVerifiedOK = verifier.verify(signBytes);
 
-            if (ok) {
+            if (isVerifiedOK) {
                 res.setSuccess(true);
                 res.setMessage("Signature verified");
 
@@ -242,6 +252,8 @@ public class SignVerifyService {
                 );
 
                 orderSignDao.updateStatus(sign.getOrderSignId(), "VERIFIED");
+                ordersService.updateStatus(signedOrder.getOrderId(), OrderStatus.PENDING);
+
             } else {
                 res.setSuccess(false);
                 res.setMessage("Signature verification failed");
@@ -272,12 +284,12 @@ public class SignVerifyService {
         }
     }
 
-    private String resolveSignaAlgo(String signAlgor) {
-        if (signAlgor == null || signAlgor.isBlank()) {
+    private String resolveSignaAlgo(String signAlgo) {
+        if (signAlgo == null || signAlgo.isBlank()) {
             return DEFAULT_SIGNATURE_ALGORITHM;
         }
 
-        String normalizedAlgo = signAlgor.trim();
+        String normalizedAlgo = signAlgo.trim();
 
         if (!ALLOWED_SIGNATURE_ALGORITHMS.contains(normalizedAlgo)) {
             throw new SecurityException("Unsupported signature algorithm: " + normalizedAlgo);
@@ -289,6 +301,7 @@ public class SignVerifyService {
     private X509Certificate loadCACertificate() throws Exception {
         String caCertPath = System.getProperty(CA_CERT_PATH_PROPERTY);
 
+        // Create CA certificate from file if you don't have it
         if (caCertPath != null && !caCertPath.isBlank()) {
             try (InputStream in = Files.newInputStream(Path.of(caCertPath))) {
                 String pem = new String(in.readAllBytes(), StandardCharsets.UTF_8);
