@@ -311,6 +311,16 @@ public class SignVerifyService {
             }
         }
 
+        Path localCaCertPath = CertificateService.resolveDataDir()
+                .resolve("ca")
+                .resolve("ca_certificate.pem");
+        if (Files.exists(localCaCertPath)) {
+            try (InputStream in = Files.newInputStream(localCaCertPath)) {
+                String pem = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+                return parsePemCertificate(pem);
+            }
+        }
+
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 
         try (InputStream in = classLoader.getResourceAsStream(DEFAULT_CA_CERT_RESOURCE)) {

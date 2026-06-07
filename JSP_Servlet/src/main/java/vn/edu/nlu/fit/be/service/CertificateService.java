@@ -18,7 +18,28 @@ import java.util.Optional;
 public class CertificateService {
 
     private final CertificateDao dao = new CertificateDao();
-    private final Path privateKeyDir = Path.of("JSP_Servlet", "data", "private_keys");
+    private static final String DATA_DIR_PROPERTY = "babyshop.data.dir";
+    private final Path dataDir = resolveDataDir();
+    private final Path caDir = dataDir.resolve("ca");
+    private final Path caCertPath = caDir.resolve("ca_certificate.pem");
+    private final Path caPrivateKeyPath = caDir.resolve("ca_private_key.pem");
+    private final Path privateKeyDir = dataDir.resolve("private_keys");
+
+    public static Path resolveDataDir() {
+        String configuredDataDir = System.getProperty(DATA_DIR_PROPERTY);
+        if (configuredDataDir != null && !configuredDataDir.isBlank()) {
+            return Path.of(configuredDataDir).toAbsolutePath().normalize();
+        }
+
+        Path workingDir = Path.of("").toAbsolutePath().normalize();
+        if (Files.exists(workingDir.resolve("src").resolve("main").resolve("webapp"))) {
+            return workingDir.resolve("data");
+        }
+        if (Files.exists(workingDir.resolve("JSP_Servlet"))) {
+            return workingDir.resolve("JSP_Servlet").resolve("data");
+        }
+        return workingDir.resolve("data");
+    }
 
     public List<UserCertificate> findRevokedByAccountId(int accountId) {
         return dao.findRevokedByAccountId(accountId);
@@ -37,13 +58,10 @@ public class CertificateService {
 
     public void createNewCertAccount(int accountId) throws Exception {
 
+            ensureLocalCa();
             KeyPair userKeyPair = CryptoUtil.generateRsaKeyPair(2048);
-            X509Certificate caCert = CryptoUtil.loadCertificate(
-                    Path.of("JSP_Servlet", "data", "ca", "ca_certificate.pem")
-            );
-            PrivateKey caPrivateKey = CryptoUtil.loadPrivateKey(
-                    Path.of("JSP_Servlet", "data", "ca", "ca_private_key.pem")
-            );
+            X509Certificate caCert = CryptoUtil.loadCertificate(caCertPath);
+            PrivateKey caPrivateKey = CryptoUtil.loadPrivateKey(caPrivateKeyPath);
             X509Certificate userCert = CryptoUtil.genCertSignedByCA(
                     userKeyPair.getPublic(),
                     caPrivateKey,
@@ -54,9 +72,7 @@ public class CertificateService {
 
             Certificate certificate = new Certificate();
             certificate.setAccountId(accountId);
-            certificate.setPublicKeyPem(
-                    "-----BEGIN PUBLIC KEY-----\n" + java.util.Base64.getEncoder().encodeToString(userKeyPair.getPublic().getEncoded())
-                            + "\n-----END PUBLIC KEY-----\n");
+            certificate.setPublicKeyPem(CryptoUtil.toPemPublicKey(userKeyPair.getPublic()));
             certificate.setCertificatePem(CryptoUtil.toPemCertificate(userCert));
             certificate.setSerialNumber(Long.toString(userCert.getSerialNumber().longValue()));
             certificate.setStatus("Active");
@@ -71,6 +87,19 @@ public class CertificateService {
             Path pemPath = privateKeyDir.resolve("account_" + accountId + "_private.pem");
             Files.writeString(pemPath, CryptoUtil.toPemPrivateKey(userKeyPair.getPrivate()));
 
+    }
+
+    private void ensureLocalCa() throws Exception {
+        if (Files.exists(caCertPath) && Files.exists(caPrivateKeyPath)) {
+            return;
+        }
+
+        Files.createDirectories(caDir);
+        KeyPair caKeyPair = CryptoUtil.generateRsaKeyPair(2048);
+        X509Certificate caCert = CryptoUtil.genSelfSignedCA(caKeyPair, "CN=BabyShop Local CA", 3650);
+
+        Files.writeString(caCertPath, CryptoUtil.toPemCertificate(caCert));
+        Files.writeString(caPrivateKeyPath, CryptoUtil.toPemPrivateKey(caKeyPair.getPrivate()));
     }
 
     public String getActiveCertPem(int accountId) {

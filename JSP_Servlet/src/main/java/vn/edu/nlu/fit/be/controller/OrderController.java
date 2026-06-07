@@ -6,6 +6,8 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import vn.edu.nlu.fit.be.dto.OrderToSignRes;
+import vn.edu.nlu.fit.be.dto.SignPackageRes;
 import vn.edu.nlu.fit.be.model.Account;
 import vn.edu.nlu.fit.be.model.Cart;
 import vn.edu.nlu.fit.be.model.CartItem.CartItem;
@@ -90,6 +92,9 @@ public class OrderController extends HttpServlet {
         int finalPrice = calculateFinalPrice(cart, session);
 
         try {
+            boolean hadActiveCert = certificateService.getActiveCertByAccountId(account.getAccountId()).isPresent();
+            certificateService.ensureActiveCert(account.getAccountId());
+
             int orderId = ordersService.createOrderFromCart(
                     account,
                     cart,
@@ -108,13 +113,23 @@ public class OrderController extends HttpServlet {
             ordersService.updateStatus(orderId, OrderStatus.WAITING_SIGNATURE);
 
             // Tạo key/certificate nếu user chưa có certificate hợp lệ.
-            certificateService.ensureActiveCert(account.getAccountId());
-
             // Lưu snapshot bất biến vào ORDER_SIGNS và sinh SHA-256 orderHash.
             orderSigningService.createOrderSignSnapshot(orderId, account.getAccountId());
+            OrderToSignRes orderToSign = orderSigningService.getOrderToSign(orderId, account.getAccountId());
+            SignPackageRes signingPackage = orderSigningService.getSigningPackage(orderId, account.getAccountId());
+
+            session.setAttribute("showSignPopup", true);
+            session.setAttribute("signOrderId", orderId);
+            session.setAttribute("signOrderHash", orderToSign == null ? "" : orderToSign.getOrderHash());
+            session.setAttribute("signingUrl", signingPackage.getSigningUrl());
+            if (hadActiveCert) {
+                session.removeAttribute("privateKeyUrl");
+            } else {
+                session.setAttribute("privateKeyUrl", signingPackage.getPrivateKeyUrl());
+            }
 
             clearCartSession(session, cart);
-            response.sendRedirect(request.getContextPath() + "/order-sign/package?orderId=" + orderId);
+            response.sendRedirect(request.getContextPath() + "/cart?waitingSignature=1");
         } catch (Exception e) {
             request.setAttribute("error", "Không thể tạo đơn hàng cần ký: " + e.getMessage());
             request.getRequestDispatcher("/cart.jsp").forward(request, response);

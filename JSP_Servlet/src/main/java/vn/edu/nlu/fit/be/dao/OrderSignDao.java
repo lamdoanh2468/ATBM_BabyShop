@@ -7,16 +7,15 @@ public class OrderSignDao extends BaseDao {
     public long insert(OrderSign sign) {
         String sql = """
                     INSERT INTO order_signs
-                        (order_id, account_id, certificate_id, snapshot_json, order_hash, hash_algorithm, status, created_at)
+                        (order_id, account_id, snapshot_json, order_hash, hash_algorithm, status, created_at)
                     VALUES
-                        (:orderId, :accountId, :certificateId, :snapshotJson, :orderHash, :hashAlgorithm, :status, NOW())
+                        (:orderId, :accountId, :snapshotJson, :orderHash, :hashAlgorithm, :status, NOW())
                 """;
 
         return jdbi.withHandle(handle ->
                 handle.createUpdate(sql)
                         .bind("orderId", sign.getOrderId())
                         .bind("accountId", sign.getAccountId())
-                        .bind("certificateId", sign.getCertificateId())
                         .bind("snapshotJson", sign.getSnapshotJson())
                         .bind("orderHash", sign.getOrderHash())
                         .bind("hashAlgorithm", sign.getHashAlgorithm())

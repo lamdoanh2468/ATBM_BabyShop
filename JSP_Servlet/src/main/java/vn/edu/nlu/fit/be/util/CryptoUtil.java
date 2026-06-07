@@ -178,4 +178,50 @@ public class CryptoUtil {
                     .getCertificate(holder);
         }
     }
+
+    public static X509Certificate genSelfSignedCA(KeyPair caKeyPair, String caDn, int validDays)
+            throws Exception {
+        Date notBefore = new Date();
+        Date notAfter = new Date(System.currentTimeMillis() + validDays * 24L * 60L * 60L * 1000L);
+        BigInteger serial = BigInteger.valueOf(System.currentTimeMillis());
+
+        X500Name issuer = new X500Name(caDn);
+        X500Name subject = new X500Name(caDn);
+
+        JcaX509v3CertificateBuilder certBuilder = new JcaX509v3CertificateBuilder(
+                issuer,
+                serial,
+                notBefore,
+                notAfter,
+                subject,
+                caKeyPair.getPublic()
+        );
+
+        certBuilder.addExtension(
+                Extension.basicConstraints,
+                true,
+                new BasicConstraints(true)
+        );
+
+        certBuilder.addExtension(
+                Extension.keyUsage,
+                true,
+                new KeyUsage(KeyUsage.keyCertSign | KeyUsage.cRLSign | KeyUsage.digitalSignature)
+        );
+
+        certBuilder.addExtension(
+                Extension.subjectKeyIdentifier,
+                false,
+                new JcaX509ExtensionUtils().createSubjectKeyIdentifier(caKeyPair.getPublic())
+        );
+
+        ContentSigner signer = new JcaContentSignerBuilder(SIGNATURE_ALGORITHM)
+                .build(caKeyPair.getPrivate());
+
+        X509CertificateHolder holder = certBuilder.build(signer);
+
+        return new JcaX509CertificateConverter()
+                .setProvider(PROVIDER)
+                .getCertificate(holder);
+    }
 }

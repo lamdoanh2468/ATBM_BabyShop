@@ -57,6 +57,7 @@
                             <li><a href="${pageContext.request.contextPath}/product-list">Sản phẩm</a></li>
                             <li><a href="${pageContext.request.contextPath}/voucher-list">Ưu đãi</a></li>
                             <li><a href="${pageContext.request.contextPath}/contact">Liên hệ</a></li>
+                            <li><a href="${pageContext.request.contextPath}/upload-signature">Tải chữ kí điện tử</a></li>
                         </ul>
                     </nav>
 

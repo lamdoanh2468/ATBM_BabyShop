@@ -18,7 +18,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 
-@WebServlet(name = "SignUploadController", value = "/signature-upload")
+@WebServlet(name = "SignUploadController", value = "/upload-signature")
 @MultipartConfig(
         maxFileSize = 1024 * 1024,
         maxRequestSize = 2 * 1024 * 1024

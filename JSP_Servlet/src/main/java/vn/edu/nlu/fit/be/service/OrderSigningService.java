@@ -20,7 +20,7 @@ public class OrderSigningService {
     private final OrdersService ordersService = new OrdersService();
     private final CertificateService certificateService = new CertificateService();
     private final OrderSignDao orderSignDao = new OrderSignDao();
-    private final Path privateKeyDir = Path.of("JSP_Servlet", "data", "private_keys");
+    private final Path privateKeyDir = CertificateService.resolveDataDir().resolve("private_keys");
 
     public void createOrderSignSnapshot(int orderId, int accountId) {
         Order order = ordersService.getOrderById(orderId);
