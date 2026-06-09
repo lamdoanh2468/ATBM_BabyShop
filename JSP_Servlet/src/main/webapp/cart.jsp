@@ -304,57 +304,19 @@
                 word-break: break-all;
             }
 
-            .sign-popup-btn {
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                gap: 0.5rem;
-                min-height: 44px;
-                padding: 0.7rem 0.85rem;
-                border: 1px solid #cbd5e1;
-                border-radius: 8px;
-                background: #ffffff;
-                color: #334155 !important;
-                font-size: 0.9rem;
-                font-weight: 700;
-                text-decoration: none !important;
-            }
-
-            .sign-popup-btn.primary {
-                border-color: #2563eb;
-                background: #2563eb;
-                color: #ffffff !important;
-            }
-
-            .sign-popup-btn.warning {
-                border-color: #f59e0b;
-                background: #f59e0b;
-                color: #ffffff !important;
-            }
-
-            .sign-popup-btn.success {
-                border-color: #16a34a;
-                background: #16a34a;
-                color: #ffffff !important;
-            }
-
-            .sign-popup-note {
-                margin: 1rem 0 0;
-                padding: 0.75rem 0.85rem;
-                border-radius: 8px;
-                background: #fff7ed;
-                color: #9a3412;
-                font-size: 0.85rem;
-                line-height: 1.45;
-            }
-
-            @media (max-width: 560px) {
-                .sign-popup-actions {
-                    grid-template-columns: 1fr;
-                }
-            }
         </style>
         <script>
+            function disablePrivateKeyButton(btn) {
+                setTimeout(function () {
+                    btn.classList.add('disabled');
+                    btn.removeAttribute('href');
+                    btn.removeAttribute('onclick');
+                    btn.innerHTML = '<i class="fa-solid fa-lock"></i> Private key đã tải';
+                    btn.style.pointerEvents = 'none';
+                    btn.style.opacity = '0.6';
+                    btn.style.cursor = 'not-allowed';
+                }, 300);
+            }
             if (!window.Swal) {
                 window.Swal = {
                     fire: function (options) {
@@ -410,13 +372,15 @@
                                                 <i class="fa-solid fa-screwdriver-wrench"></i>
                                                 Tải keytool
                                             </a>
-                                            <c:if test="${not empty sessionScope.privateKeyUrl}">
-                                                <a class="sign-popup-btn warning"
-                                                   href="${pageContext.request.contextPath}${sessionScope.privateKeyUrl}">
-                                                    <i class="fa-solid fa-key"></i>
-                                                    Tải private key
-                                                </a>
-                                            </c:if>
+                                                 <c:if test="${not empty sessionScope.privateKeyUrl}">
+                                                    <a id="downloadPrivateKeyBtn"
+                                                       class="sign-popup-btn warning"
+                                                       href="${pageContext.request.contextPath}${sessionScope.privateKeyUrl}"
+                                                       onclick="disablePrivateKeyButton(this)">
+                                                        <i class="fa-solid fa-key"></i>
+                                                        Tải private key
+                                                    </a>
+                                                </c:if>
                                             <a class="sign-popup-btn success"
                                                href="${pageContext.request.contextPath}/upload-signature">
                                                 <i class="fa-solid fa-cloud-arrow-up"></i>

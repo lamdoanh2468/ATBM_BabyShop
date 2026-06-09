@@ -92,7 +92,6 @@ public class OrderController extends HttpServlet {
         int finalPrice = calculateFinalPrice(cart, session);
 
         try {
-            boolean hadActiveCert = certificateService.getActiveCertByAccountId(account.getAccountId()).isPresent();
             certificateService.ensureActiveCert(account.getAccountId());
 
             int orderId = ordersService.createOrderFromCart(
@@ -122,7 +121,8 @@ public class OrderController extends HttpServlet {
             session.setAttribute("signOrderId", orderId);
             session.setAttribute("signOrderHash", orderToSign == null ? "" : orderToSign.getOrderHash());
             session.setAttribute("signingUrl", signingPackage.getSigningUrl());
-            if (hadActiveCert) {
+
+            if (orderSigningService.hasPendingPrivateKey(orderId)) {
                 session.removeAttribute("privateKeyUrl");
             } else {
                 session.setAttribute("privateKeyUrl", signingPackage.getPrivateKeyUrl());
