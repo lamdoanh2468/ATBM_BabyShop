@@ -4,6 +4,7 @@ import jakarta.servlet.*;
 import jakarta.servlet.http.*;
 import jakarta.servlet.annotation.*;
 import vn.edu.nlu.fit.be.model.Account;
+import vn.edu.nlu.fit.be.model.UserCertificate;
 import vn.edu.nlu.fit.be.service.CertificateService;
 
 import java.io.IOException;
@@ -11,7 +12,8 @@ import java.io.IOException;
 @WebServlet(name = "SecurityKeyController", urlPatterns = {
         "/security-key",
         "/security-key/create",
-        "/security-key/revoke"
+        "/security-key/revoke",
+        "/security-key/download-private-key"
 })
 public class SecurityKeyController extends HttpServlet {
 
@@ -26,7 +28,24 @@ public class SecurityKeyController extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/login");
             return;
         }
+        Account account = (Account) session.getAttribute("USER");
+        String path = request.getServletPath();
 
+        UserCertificate activeCert = certificateService.getActiveCertByAccountId(account.getAccountId()).orElse(null);
+        request.setAttribute("hasCertificate", activeCert != null);
+        request.setAttribute("certificate", activeCert);
+        request.setAttribute("canDownloadPrivateKey", certificateService.hasPendingPrivateKey(account.getAccountId()));
+
+        if ("/security-key/download-private-key".equals(path)) {
+            try {
+                certificateService.downloadPrivateKey(account.getAccountId(), response);
+            } catch (Exception e) {
+                if (!response.isCommitted()) {
+                    response.sendRedirect(request.getContextPath() + "/security-key?downloadError=1");
+                }
+            }
+            return;
+        }
         request.getRequestDispatcher("/security-key.jsp").forward(request, response);
     }
 
@@ -47,8 +66,7 @@ public class SecurityKeyController extends HttpServlet {
             if ("/security-key/create".equals(path)) {
                 certificateService.revokeActiveCertByLostKey(
                         account.getAccountId(),
-                        "User created new key"
-                );
+                        "User created new key");
 
                 certificateService.createNewCertAccount(account.getAccountId());
 
@@ -59,8 +77,7 @@ public class SecurityKeyController extends HttpServlet {
             if ("/security-key/revoke".equals(path)) {
                 certificateService.revokeActiveCertByLostKey(
                         account.getAccountId(),
-                        "User reported lost private key"
-                );
+                        "User reported lost private key");
 
                 response.sendRedirect(request.getContextPath() + "/security-key?revoked=1");
                 return;

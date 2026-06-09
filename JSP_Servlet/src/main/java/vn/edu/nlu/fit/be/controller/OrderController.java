@@ -82,7 +82,8 @@ public class OrderController extends HttpServlet {
 
         if (!stockProductService.checkAvailable(cart)) {
             var outOfStockProducts = stockProductService.getOutOfStockProducts(cart);
-            session.setAttribute("stockError", "Không đủ số lượng tồn kho cho: " + String.join(", ", outOfStockProducts));
+            session.setAttribute("stockError",
+                    "Không đủ số lượng tồn kho cho: " + String.join(", ", outOfStockProducts));
             response.sendRedirect(request.getContextPath() + "/cart?paid=0");
             return;
         }
@@ -100,8 +101,7 @@ public class OrderController extends HttpServlet {
                     deliveryAddress,
                     paymentMethod,
                     voucherId,
-                    finalPrice
-            );
+                    finalPrice);
 
             for (CartItem item : cart.getItems()) {
                 stockProductService.updateStockProduct(item.getProduct().getProductId(), item.getQuantity());
@@ -122,10 +122,10 @@ public class OrderController extends HttpServlet {
             session.setAttribute("signOrderHash", orderToSign == null ? "" : orderToSign.getOrderHash());
             session.setAttribute("signingUrl", signingPackage.getSigningUrl());
 
-            if (orderSigningService.hasPendingPrivateKey(orderId)) {
-                session.removeAttribute("privateKeyUrl");
+            if (certificateService.hasPendingPrivateKey(account.getAccountId())) {
+                session.setAttribute("privateKeyUrl", "/security-key/download-private-key");
             } else {
-                session.setAttribute("privateKeyUrl", signingPackage.getPrivateKeyUrl());
+                session.removeAttribute("privateKeyUrl");
             }
 
             clearCartSession(session, cart);
@@ -137,7 +137,7 @@ public class OrderController extends HttpServlet {
     }
 
     private void applyVoucher(HttpServletRequest request, HttpServletResponse response, HttpSession session,
-                              String deliveryAddress, PaymentMethod paymentMethod, String voucherCode)
+            String deliveryAddress, PaymentMethod paymentMethod, String voucherCode)
             throws ServletException, IOException {
         if (voucherCode == null) {
             request.setAttribute("voucherError", "Vui lòng nhập mã voucher");
@@ -160,7 +160,7 @@ public class OrderController extends HttpServlet {
     }
 
     private void removeVoucher(HttpServletRequest request, HttpServletResponse response, HttpSession session,
-                               String deliveryAddress, PaymentMethod paymentMethod)
+            String deliveryAddress, PaymentMethod paymentMethod)
             throws ServletException, IOException {
         session.removeAttribute("discountAmount");
         session.removeAttribute("voucherCode");

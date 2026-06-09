@@ -372,7 +372,8 @@
                                                 <i class="fa-solid fa-screwdriver-wrench"></i>
                                                 Tải keytool
                                             </a>
-                                                 <c:if test="${not empty sessionScope.privateKeyUrl}">
+                                            <c:choose>
+                                                <c:when test="${not empty sessionScope.privateKeyUrl}">
                                                     <a id="downloadPrivateKeyBtn"
                                                        class="sign-popup-btn warning"
                                                        href="${pageContext.request.contextPath}${sessionScope.privateKeyUrl}"
@@ -380,7 +381,15 @@
                                                         <i class="fa-solid fa-key"></i>
                                                         Tải private key
                                                     </a>
-                                                </c:if>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <a class="sign-popup-btn warning"
+                                                       href="${pageContext.request.contextPath}/security-key">
+                                                        <i class="fa-solid fa-key"></i>
+                                                        Tạo private key mới
+                                                    </a>
+                                                </c:otherwise>
+                                            </c:choose>
                                             <a class="sign-popup-btn success"
                                                href="${pageContext.request.contextPath}/upload-signature">
                                                 <i class="fa-solid fa-cloud-arrow-up"></i>

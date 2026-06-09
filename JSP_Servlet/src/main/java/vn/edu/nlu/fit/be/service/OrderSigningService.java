@@ -107,10 +107,6 @@ public class OrderSigningService {
             throw new RuntimeException("Cannot consume private key", e);
         }
     }
-    public boolean hasPendingPrivateKey(int accountId) {
-        Path pemPath = privateKeyDir.resolve("account_" + accountId + "_private.pem");
-        return Files.exists(pemPath);
-    }
 
     public byte[] loadSigningTool() {
         // Not implemented - return empty

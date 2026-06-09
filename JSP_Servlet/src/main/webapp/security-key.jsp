@@ -49,8 +49,8 @@
                 <li onclick="location.href='${pageContext.request.contextPath}/change-password'">
                     <i class="fas fa-key"></i> Đổi mật khẩu
                 </li>
-                <li class="active">
-                    <i class="fas fa-shield-halved"></i> Khóa bảo mật
+                <li onclick="location.href='${pageContext.request.contextPath}/security-key'">
+                    <i class="fas fa-shield-halved"></i> Chữ ký điện tử
                 </li>
             </ul>
         </aside>
@@ -150,27 +150,29 @@
 
                     <!-- ACTIONS -->
                     <div class="sk-actions">
-                        <button class="sk-btn primary" onclick="showCreateModal()">
+                            <button type="button" class="sk-btn primary" onclick="showCreateModal()">
                             <i class="fas fa-plus-circle"></i>
                             Tạo khóa / chứng thư mới
                         </button>
 
-                        <button class="sk-btn danger" onclick="showRevokeModal()">
+                            <button type="button" class="sk-btn danger" onclick="showRevokeModal()">
                             <i class="fas fa-triangle-exclamation"></i>
                             Báo mất private key
                         </button>
 
-                        <button class="sk-btn warning">
-                            <i class="fas fa-download"></i>
-                            Tải private key (một lần)
-                        </button>
+                            <c:if test="${canDownloadPrivateKey}">
+                                <a class="sk-btn primary" href="${pageContext.request.contextPath}/security-key/download-private-key">
+                                    <i class="fas fa-key"></i>
+                                    Tải private key
+                                </a>
+                            </c:if>
 
-                        <button class="sk-btn">
-                            <i class="fas fa-certificate"></i>
-                            Tải chứng thư
-                        </button>
+                            <button type="button" class="sk-btn">
+                                <i class="fas fa-certificate"></i>
+                                Tải chứng thư
+                            </button>
 
-                        <button class="sk-btn">
+                            <button type="button" class="sk-btn">
                             <i class="fas fa-toolbox"></i>
                             Tải lại tool ký
                         </button>
@@ -214,6 +216,9 @@
 
 <jsp:include page="footer.jsp"/>
 
+<form id="createKeyForm" method="post" action="${pageContext.request.contextPath}/security-key/create" style="display:none"></form>
+<form id="revokeKeyForm" method="post" action="${pageContext.request.contextPath}/security-key/revoke" style="display:none"></form>
+
 <script>
     function showCreateModal() {
         Swal.fire({
@@ -226,6 +231,10 @@
             confirmButtonText: 'Xác nhận tạo',
             cancelButtonText: 'Hủy',
             confirmButtonColor: '#6366f1'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('createKeyForm').submit();
+            }
         });
     }
 
@@ -238,6 +247,10 @@
             confirmButtonText: 'Xác nhận thu hồi',
             cancelButtonText: 'Hủy',
             confirmButtonColor: '#ef4444'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('revokeKeyForm').submit();
+            }
         });
     }
 </script>
