@@ -84,7 +84,7 @@ public class CertificateService {
 
         // write private key to temporary file for one-time download
         Files.createDirectories(privateKeyDir);
-        Path pemPath = privateKeyDir.resolve("account_" + accountId + "_private.pem");
+        Path pemPath = privateKeyDir.resolve("account_" + accountId + "_private.key");
         Files.writeString(pemPath, CryptoUtil.toPemPrivateKey(userKeyPair.getPrivate()));
 
     }
@@ -115,12 +115,12 @@ public class CertificateService {
     }
 
     public boolean hasPendingPrivateKey(int accountId) {
-        Path pemPath = privateKeyDir.resolve("account_" + accountId + "_private.pem");
+        Path pemPath = privateKeyDir.resolve("account_" + accountId + "_private.key");
         return Files.exists(pemPath);
     }
 
     public void downloadPrivateKey(int accountId, HttpServletResponse response) throws IOException {
-        Path pemPath = privateKeyDir.resolve("account_" + accountId + "_private.pem");
+        Path pemPath = privateKeyDir.resolve("account_" + accountId + "_private.key");
 
         if (!Files.exists(pemPath)) {
             throw new IOException("Private key not found or already downloaded");
@@ -130,7 +130,7 @@ public class CertificateService {
         response.setContentType("application/octet-stream");
         response.setHeader(
                 "Content-Disposition",
-                "attachment; filename=\"account_" + accountId + "_private.pem\"");
+                "attachment; filename=\"account_" + accountId + "_private.key\"");
         response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
         response.setContentLengthLong(Files.size(pemPath));
 

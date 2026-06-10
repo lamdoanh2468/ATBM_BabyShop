@@ -95,7 +95,7 @@ public class OrderSigningService {
             throw new IllegalArgumentException("Not your order");
         }
 
-        Path pemPath = privateKeyDir.resolve("account_" + accountId + "_private.pem");
+        Path pemPath = privateKeyDir.resolve("account_" + accountId + "_private.key");
         try {
             if (!Files.exists(pemPath)) {
                 return null;

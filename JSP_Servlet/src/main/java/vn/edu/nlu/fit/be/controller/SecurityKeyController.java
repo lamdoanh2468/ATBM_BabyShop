@@ -78,7 +78,7 @@ public class SecurityKeyController extends HttpServlet {
                 certificateService.revokeActiveCertByLostKey(
                         account.getAccountId(),
                         "User reported lost private key");
-
+                certificateService.createNewCertAccount(account.getAccountId());
                 response.sendRedirect(request.getContextPath() + "/security-key?revoked=1");
                 return;
             }
