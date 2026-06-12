@@ -98,6 +98,49 @@
                 <div class="bp-wrap">
                     <!-- BOUGHTS là Map<orderId, List<OrderDetail>> -->
                     <c:forEach items="${BOUGHTS}" var="entry" varStatus="orderLoop">
+                        <c:set var="orderStatus" value="${ORDER_STATUSES[entry.key]}"/>
+
+                        <c:set var="statusLabel" value="Không xác định"/>
+                        <c:set var="statusClass" value="bp-status-unknown"/>
+                        <c:set var="statusIcon" value="fa-circle-question"/>
+
+                        <c:choose>
+                            <c:when test="${orderStatus == 'WAITING_SIGNATURE'}">
+                                <c:set var="statusLabel" value="Chờ ký"/>
+                                <c:set var="statusClass" value="bp-status-waiting-signature"/>
+                                <c:set var="statusIcon" value="fa-file-signature"/>
+                            </c:when>
+
+                            <c:when test="${orderStatus == 'SIGNATURE_INVALID'}">
+                                <c:set var="statusLabel" value="Chữ ký không hợp lệ"/>
+                                <c:set var="statusClass" value="bp-status-signature-invalid"/>
+                                <c:set var="statusIcon" value="fa-triangle-exclamation"/>
+                            </c:when>
+
+                            <c:when test="${orderStatus == 'TAMPERED'}">
+                                <c:set var="statusLabel" value="Dữ liệu bị thay đổi"/>
+                                <c:set var="statusClass" value="bp-status-tampered"/>
+                                <c:set var="statusIcon" value="fa-shield-virus"/>
+                            </c:when>
+
+                            <c:when test="${orderStatus == 'VERIFIED'}">
+                                <c:set var="statusLabel" value="Đã xác thực chữ ký"/>
+                                <c:set var="statusClass" value="bp-status-verified"/>
+                                <c:set var="statusIcon" value="fa-solid fa-certificate"/>
+                            </c:when>
+
+                            <c:when test="${orderStatus == 'DONE'}">
+                                <c:set var="statusLabel" value="Đã hoàn thành"/>
+                                <c:set var="statusClass" value="bp-status-done"/>
+                                <c:set var="statusIcon" value="fa-check-circle"/>
+                            </c:when>
+
+                            <c:when test="${orderStatus == 'CANCELLED'}">
+                                <c:set var="statusLabel" value="Đã hủy"/>
+                                <c:set var="statusClass" value="bp-status-cancelled"/>
+                                <c:set var="statusIcon" value="fa-ban"/>
+                            </c:when>
+                        </c:choose>
                         <div class="bp-order">
                             <!-- Order Header -->
                             <div class="bp-order-head">
@@ -105,9 +148,9 @@
                                     <i class="fas fa-receipt"></i>
                                     Đơn hàng #${entry.key}
                                 </h4>
-                                <div class="bp-order-badge">
-                                    <i class="fas fa-check-circle"></i>
-                                    Đã hoàn thành
+                                <div class="bp-order-badge ${statusClass}">
+                                    <i class="fas ${statusIcon}"></i>
+                                        ${statusLabel}
                                 </div>
                             </div>
 
@@ -187,8 +230,8 @@
                             <!-- Order Footer -->
                             <div class="bp-order-footer">
                                 <div class="bp-date">
-                                    <i class="fas fa-calendar-alt"></i>
-                                    <span>Đơn hàng đã hoàn thành</span>
+                                    <i class="fas ${statusIcon}"></i>
+                                    <span>Trạng thái đơn hàng: ${statusLabel}</span>
                                 </div>
                                 <div class="bp-total">
                                     <c:set var="orderTotal" value="0"/>

@@ -8,10 +8,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Khóa bảo mật & Chứng thư số</title>
     <link rel="icon" type="image/x-icon" href="${pageContext.request.contextPath}/favicon.ico">
-    
+
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -49,8 +49,8 @@
                 <li onclick="location.href='${pageContext.request.contextPath}/change-password'">
                     <i class="fas fa-key"></i> Đổi mật khẩu
                 </li>
-                <li class="active">
-                    <i class="fas fa-shield-halved"></i> Khóa bảo mật
+                <li onclick="location.href='${pageContext.request.contextPath}/security-key'">
+                    <i class="fas fa-shield-halved"></i> Chữ ký điện tử
                 </li>
             </ul>
         </aside>
@@ -58,7 +58,7 @@
         <!-- CONTENT -->
         <main class="pf-content">
             <section class="pf-section pf-section-active">
-                <h3><i class="fas fa-shield-halved"></i> Quản lý khóa & chứng thư số</h3>
+                <h3><i class="fas fa-shield-halved"></i> Quản lý khóa và chứng thư số</h3>
 
                 <c:if test="${not empty error}">
                     <div class="sk-message error">
@@ -93,7 +93,7 @@
                 <c:if test="${param.downloadError == '1'}">
                     <div class="sk-message error">
                         <i class="fas fa-exclamation-circle"></i>
-                        Không thể tải file. Link tải private key chỉ khả dụng ngay sau khi tạo khóa mới.
+                        Không thể tải private key. Link tải private key chỉ khả dụng ngay sau khi tạo khóa mới.
                     </div>
                 </c:if>
 
@@ -105,10 +105,10 @@
                             <h4>
                                 <c:choose>
                                     <c:when test="${hasCertificate}">
-                                        Bạn đã có public key / chứng thư số
+                                        Bạn đã được cấp cặp khóa RSA và chứng thư số
                                     </c:when>
                                     <c:otherwise>
-                                        Bạn chưa có public key / chứng thư số
+                                        Bạn chưa được cấp cặp khóa RSA và chứng thư số
                                     </c:otherwise>
                                 </c:choose>
                             </h4>
@@ -123,7 +123,7 @@
                                 <c:set var="statusClass" value="status-expired"/>
                             </c:if>
                             <span class="sk-status-pill ${statusClass}">
-                                ${certificate.status}
+                                    ${certificate.status}
                             </span>
                         </c:if>
                     </div>
@@ -148,38 +148,33 @@
                         </div>
                     </div>
 
-                    <!-- PUBLIC KEY PREVIEW -->
-                    <div class="sk-key-preview">
-                        <span>Public key (PEM)</span>
-                        <pre>-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA7V9...
-... (rút gọn hiển thị) ...
------END PUBLIC KEY-----</pre>
-                    </div>
-
                     <!-- ACTIONS -->
                     <div class="sk-actions">
-                        <button class="sk-btn primary" onclick="showCreateModal()">
+                        <button type="button" class="sk-btn primary" onclick="showCreateModal()">
                             <i class="fas fa-plus-circle"></i>
                             Tạo khóa / chứng thư mới
                         </button>
 
-                        <button class="sk-btn danger" onclick="showRevokeModal()">
+                        <button type="button" class="sk-btn danger" onclick="showRevokeModal()">
                             <i class="fas fa-triangle-exclamation"></i>
                             Báo mất private key
                         </button>
 
-                        <button class="sk-btn warning">
-                            <i class="fas fa-download"></i>
-                            Tải private key (một lần)
-                        </button>
+                        <c:if test="${canDownloadPrivateKey}">
+                            <a class="sk-btn primary"
+                               href="${pageContext.request.contextPath}/security-key/download-private-key"
+                               onclick="return confirmDownloadPrivateKey(event)">
+                                <i class="fas fa-key"></i>
+                                Tải private key
+                            </a>
+                        </c:if>
 
-                        <button class="sk-btn">
+                        <button type="button" class="sk-btn">
                             <i class="fas fa-certificate"></i>
                             Tải chứng thư
                         </button>
 
-                        <button class="sk-btn">
+                        <button type="button" class="sk-btn">
                             <i class="fas fa-toolbox"></i>
                             Tải lại tool ký
                         </button>
@@ -223,18 +218,27 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA7V9...
 
 <jsp:include page="footer.jsp"/>
 
+<form id="createKeyForm" method="post" action="${pageContext.request.contextPath}/security-key/create"
+      style="display:none"></form>
+<form id="revokeKeyForm" method="post" action="${pageContext.request.contextPath}/security-key/revoke"
+      style="display:none"></form>
+
 <script>
     function showCreateModal() {
         Swal.fire({
             title: 'Tạo khóa / chứng thư mới?',
             html: 'Hệ thống sẽ tạo cặp khóa RSA 2048-bit mới.<br>' +
-                  'Private key chỉ được tải <strong>một lần</strong> ngay sau khi tạo.<br>' +
-                  'Chứng thư cũ (nếu có) sẽ bị thu hồi.',
+                'Private key chỉ được tải <strong>một lần</strong> ngay sau khi tạo.<br>' +
+                'Chứng thư cũ (nếu có) sẽ bị thu hồi.',
             icon: 'question',
             showCancelButton: true,
             confirmButtonText: 'Xác nhận tạo',
             cancelButtonText: 'Hủy',
             confirmButtonColor: '#6366f1'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('createKeyForm').submit();
+            }
         });
     }
 
@@ -247,8 +251,41 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA7V9...
             confirmButtonText: 'Xác nhận thu hồi',
             cancelButtonText: 'Hủy',
             confirmButtonColor: '#ef4444'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('revokeKeyForm').submit();
+            }
         });
     }
+
+    function confirmDownloadPrivateKey(event) {
+        event.preventDefault();
+
+        const downloadUrl = event.currentTarget.href;
+
+        Swal.fire({
+            title: 'Tải private key?',
+            html: 'Private key chỉ được tải <strong>một lần duy nhất</strong>.<br>' +
+                'Sau khi tải xong, hệ thống sẽ xóa file này khỏi server.<br><br>' +
+                '<strong>Hãy lưu file ở nơi an toàn.</strong>',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Tải ngay',
+            cancelButtonText: 'Hủy',
+            confirmButtonColor: '#6366f1',
+            cancelButtonColor: '#64748b'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = downloadUrl;
+            }
+        });
+
+        return false;
+    }
+
+    <c:if test="${param.lostKey == '1'}">
+    showRevokeModal();
+    </c:if>
 </script>
 </body>
 </html>

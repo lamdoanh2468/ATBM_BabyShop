@@ -77,54 +77,12 @@
 
         <!-- MAIN -->
         <main class="main">
-            <h2>Quản lý kho hàng</h2>
-
-            <!-- FORM THÊM / SỬA KHO -->
-            <section class="voucher-form">
-                <h3>
-                    <c:choose>
-                        <c:when test="${param.action == 'edit'}">Sửa kho hàng</c:when>
-                        <c:otherwise>Thêm kho mới</c:otherwise>
-                    </c:choose>
-                </h3>
-
-                <form class="form-grid"
-                      action="${pageContext.request.contextPath}/admin/stocks"
-                      method="post">
-
-                    <input type="hidden" name="action"
-                           value="${param.action == 'edit' ? 'edit' : 'add'}"/>
-
-                    <c:if test="${param.action == 'edit'}">
-                        <input type="hidden" name="id" value="${stockToEdit.stockId}"/>
-                    </c:if>
-
-                    <div class="form-item">
-                        <label>Tên kho</label>
-                        <input type="text"
-                               name="name"
-                               value="${stockToEdit != null ? stockToEdit.stockName : ''}"
-                               placeholder="Ví dụ: Kho Hà Nội"
-                               required>
-                    </div>
-
-                    <div class="form-item">
-                        <label>Địa chỉ</label>
-                        <input type="text"
-                               name="address"
-                               value="${stockToEdit != null ? stockToEdit.stockAddress : ''}"
-                               placeholder="123 Nguyễn Trãi, Hà Nội"
-                               required>
-                    </div>
-
-                    <button type="submit" class="btn-primary">
-                        <c:choose>
-                            <c:when test="${param.action == 'edit'}">Cập nhật kho</c:when>
-                            <c:otherwise>Thêm kho hàng</c:otherwise>
-                        </c:choose>
-                    </button>
-                </form>
-            </section>
+            <div class="product-header">
+                <h2>Quản lý kho hàng</h2>
+                <a class="btn-add" href="${pageContext.request.contextPath}/admin/stocks?action=add">
+                    <i class="fa-solid fa-plus"></i> Thêm kho hàng
+                </a>
+            </div>
 
             <!-- DANH SÁCH KHO -->
             <section class="voucher-list">

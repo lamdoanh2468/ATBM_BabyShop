@@ -113,12 +113,10 @@
                                 onchange="updateStatus(this)" ${order.statusOrder eq 'CANCELLED' ||
                                 order.statusOrder eq 'DONE' ? 'disabled' : '' }>
 
-                            
                             <option value="WAITING_SIGNATURE" ${order.statusOrder eq 'WAITING_SIGNATURE' ? 'selected'
                                     : '' }>
                                 Ch&#7901; k&#253;
                             </option>
-
 
                             <option value="SIGNATURE_INVALID" ${order.statusOrder eq 'SIGNATURE_INVALID' ? 'selected'
                                     : '' }>
@@ -179,9 +177,9 @@
 
 <script>
     function updateStatus(select) {
-        var id = select.getAttribute('data-id');
-        var status = select.value;
-        var previousValue = select.getAttribute('data-previous') || 'WAITING_SIGNATURE';
+        const id = select.getAttribute('data-id');
+        const status = select.value;
+        const previousValue = select.getAttribute('data-previous') || 'WAITING_SIGNATURE';
 
         // Xác nhận khi chọn Cancelled
         if (status === 'CANCELLED') {

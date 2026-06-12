@@ -54,9 +54,9 @@
                         <main class="main">
                             <div class="product-header">
                                 <h2>Quản lý tài khoản</h2>
-                                <button class="btn-add" onclick="toggleAddForm()">
+                                <a class="btn-add" href="${pageContext.request.contextPath}/admin/accounts/add">
                                     <i class="fa-solid fa-plus"></i> Thêm tài khoản
-                                </button>
+                                </a>
                             </div>
 
                             <!-- SEARCH BAR -->
@@ -66,39 +66,6 @@
                                     value="${param.search}">
                                 <i class="fa-solid fa-magnifying-glass"></i>
                             </form>
-
-                            <!-- ADD FORM (Collapsible) -->
-                            <div id="add-account-form" class="voucher-form" style="display: none; margin-bottom: 30px;">
-                                <h3><i class="fa-solid fa-user-plus"></i> Tạo tài khoản mới</h3>
-                                <form action="${pageContext.request.contextPath}/admin/accounts/add" method="post">
-                                    <div class="form-grid">
-                                        <div class="form-item">
-                                            <label>Username</label>
-                                            <input type="text" name="username" required>
-                                        </div>
-                                        <div class="form-item">
-                                            <label>Email</label>
-                                            <input type="email" name="email" required>
-                                        </div>
-                                        <div class="form-item">
-                                            <label>Password</label>
-                                            <input type="password" name="password" required>
-                                        </div>
-                                        <div class="form-item">
-                                            <label>Vai trò</label>
-                                            <select name="role">
-                                                <option value="0">User</option>
-                                                <option value="1">Admin</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div style="margin-top: 20px; text-align: right;">
-                                        <button type="button" class="btn-small btn-off"
-                                            onclick="toggleAddForm()">Hủy</button>
-                                        <button type="submit" class="btn-primary">Lưu tài khoản</button>
-                                    </div>
-                                </form>
-                            </div>
 
                             <!-- TABLE -->
                             <table class="data-table">

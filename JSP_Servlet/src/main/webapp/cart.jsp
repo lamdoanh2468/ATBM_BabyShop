@@ -375,7 +375,7 @@
     </a>
 
     <a class="sign-step-card"
-       href="${pageContext.request.contextPath}/order-sign/tool?orderId=${sessionScope.signOrderId}">
+       href="${pageContext.request.contextPath}/security-key/download-sign-app">
         <div class="sign-step-icon">
             <i class="fa-solid fa-screwdriver-wrench"></i>
         </div>
@@ -441,7 +441,7 @@
                                                 </c:choose>
 
                                                 <a class="sign-lost-key-link"
-                                                   href="${pageContext.request.contextPath}/security-key?lostKey=1">
+                                                   href="${pageContext.request.contextPath}/security-key?lostKey=1" target="_blank">
                                                     <i class="fa-solid fa-triangle-exclamation"></i>
                                                     Tôi bị mất private key
                                                 </a>

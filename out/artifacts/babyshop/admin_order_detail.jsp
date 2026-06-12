@@ -1,0 +1,143 @@
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Admin - Chi tiết đơn hàng</title>
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/admin_style.css?v=20260502-2"/>
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css"/>
+</head>
+<body>
+<div class="dashboard">
+    <aside class="sidebar">
+        <nav class="menu">
+            <a href="${pageContext.request.contextPath}/admin/overview"><i class="fa-solid fa-house"></i><span>Dashboard</span></a>
+            <a href="${pageContext.request.contextPath}/admin/accounts"><i class="fa-solid fa-user"></i><span>Tài khoản</span></a>
+            <a href="${pageContext.request.contextPath}/admin/orders" class="active"><i class="fa-solid fa-box"></i><span>Đơn hàng</span></a>
+            <a href="${pageContext.request.contextPath}/admin/products"><i class="fa-solid fa-cubes"></i><span>Sản phẩm</span></a>
+            <a href="${pageContext.request.contextPath}/admin/categories"><i class="fa-solid fa-layer-group"></i><span>Danh mục sản phẩm</span></a>
+            <a href="${pageContext.request.contextPath}/admin/brands"><i class="fa-solid fa-tags"></i><span>Thương hiệu</span></a>
+            <a href="${pageContext.request.contextPath}/admin/contacts"><i class="fa-solid fa-envelope"></i><span>Liên hệ</span></a>
+            <a href="${pageContext.request.contextPath}/admin/stocks"><i class="fa-solid fa-warehouse"></i><span>Kho hàng</span></a>
+            <a href="${pageContext.request.contextPath}/admin/vouchers"><i class="fa-solid fa-ticket"></i><span>Vouchers</span></a>
+            <a href="${pageContext.request.contextPath}/admin/settings"><i class="fa-solid fa-gear"></i><span>Cài đặt</span></a>
+        </nav>
+    </aside>
+
+    <main class="main">
+        <div class="product-form-shell">
+            <div class="product-form-hero">
+                <div class="product-form-copy">
+                    <span class="product-form-eyebrow">Order Detail</span>
+                    <h2>Chi tiết đơn hàng #${order.orderId}</h2>
+                    <p>Xem thông tin khách hàng, trạng thái đơn và toàn bộ sản phẩm thuộc đơn hàng này.</p>
+                </div>
+
+                <a href="${pageContext.request.contextPath}/admin/orders" class="product-back-link">
+                    <i class="fa-solid fa-arrow-left"></i>
+                    <span>Quay lại danh sách</span>
+                </a>
+            </div>
+
+            <div class="product-form-layout">
+                <section class="product-form-card">
+                    <div class="product-form-card-head">
+                        <div>
+                            <h3>Thông tin đơn hàng</h3>
+                            <p>Thông tin này được lấy trực tiếp từ hệ thống tại thời điểm hiện tại.</p>
+                        </div>
+                        <a href="${pageContext.request.contextPath}/admin/orders/edit?id=${order.orderId}"
+                           class="product-back-link">
+                            <i class="fa-solid fa-pen"></i>
+                            <span>Sửa đơn hàng</span>
+                        </a>
+                    </div>
+
+                    <div class="product-preview-meta" style="margin-bottom:20px;">
+                        <div>
+                            <span>Khách hàng</span>
+                            <strong>${order.username}</strong>
+                        </div>
+                        <div>
+                            <span>Ngày đặt</span>
+                            <strong>${order.orderDate}</strong>
+                        </div>
+                        <div>
+                            <span>Thanh toán</span>
+                            <strong>${order.paymentMethod}</strong>
+                        </div>
+                        <div>
+                            <span>Trạng thái</span>
+                            <strong>${order.statusOrder}</strong>
+                        </div>
+                    </div>
+
+                    <div class="voucher-form" style="padding:18px;margin-top:0;">
+                        <h3 style="margin-bottom:10px;">Địa chỉ giao hàng</h3>
+                        <p style="color:#5f5c82;line-height:1.6;">${order.deliveryAddress}</p>
+                    </div>
+
+                    <section class="voucher-list">
+                        <h3>Sản phẩm trong đơn</h3>
+                        <table class="data-table">
+                            <thead>
+                            <tr>
+                                <th>Sản phẩm</th>
+                                <th>Tên</th>
+                                <th>Đơn giá</th>
+                                <th>Số lượng</th>
+                                <th>Thành tiền</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <c:forEach var="detail" items="${orderDetails}">
+                                <tr>
+                                    <td>
+                                        <c:if test="${detail.product != null && not empty detail.product.productImage}">
+                                            <img src="${detail.product.productImage}" class="product-img" alt="product"/>
+                                        </c:if>
+                                    </td>
+                                    <td>${detail.product != null ? detail.product.productName : detail.productId}</td>
+                                    <td><fmt:formatNumber value="${detail.unitPrice}" type="number"/>đ</td>
+                                    <td>${detail.quantity}</td>
+                                    <td><fmt:formatNumber value="${detail.unitPrice * detail.quantity}" type="number"/>đ</td>
+                                </tr>
+                            </c:forEach>
+                            </tbody>
+                        </table>
+                    </section>
+                </section>
+
+                <aside class="product-preview-card">
+                    <div class="product-preview-media">
+                        <div class="product-preview-placeholder">
+                            <i class="fa-solid fa-receipt"></i>
+                        </div>
+                    </div>
+
+                    <div class="product-preview-body">
+                        <span class="product-preview-badge">Tóm tắt</span>
+                        <h3>Đơn hàng #${order.orderId}</h3>
+                        <p>Đơn này thuộc khách hàng ${order.username} và hiện có tổng giá trị hiển thị bên dưới.</p>
+                        <div class="product-preview-meta">
+                            <div>
+                                <span>Tổng tiền</span>
+                                <strong><fmt:formatNumber value="${order.totalAmount}" type="number"/>đ</strong>
+                            </div>
+                            <div>
+                                <span>Số sản phẩm</span>
+                                <strong>${orderDetails.size()}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>
