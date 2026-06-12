@@ -2,6 +2,7 @@ package vn.edu.nlu.fit.be.dto;
 
 public class OrderToSignRes {
 	private int orderId;
+	private int accountId;
 	private int certificateId;
 	private String orderHash;
 	private String snapshotJson;
@@ -15,8 +16,14 @@ public class OrderToSignRes {
 		this.orderId = orderId;
 	}
 
+	public int getAccountId() {
+		return accountId;
+	}
 	public int getCertificateId() {
 		return certificateId;
+	}
+	public void setAccountId(int accountId) {
+		this.accountId = accountId;
 	}
 	public String getOrderHash() {
 		return orderHash;

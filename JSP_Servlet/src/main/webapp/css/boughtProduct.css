@@ -416,3 +416,54 @@
     content: "🛒";
     font-size: 28px;
 }
+
+.bp-status-waiting-signature {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.bp-status-signature-invalid {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.bp-status-tampered {
+    background: #fee2e2;
+    color: #7f1d1d;
+}
+
+.bp-status-verified {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.bp-status-done {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.bp-status-cancelled {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.bp-status-unknown {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.bp-sign-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: #4f46e5;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.bp-sign-btn:hover {
+    opacity: 0.9;
+}

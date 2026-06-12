@@ -105,10 +105,10 @@
                             <h4>
                                 <c:choose>
                                     <c:when test="${hasCertificate}">
-                                        Bạn đã có public key / chứng thư số
+                                        Bạn đã được cấp cặp khóa RSA và chứng thư số
                                     </c:when>
                                     <c:otherwise>
-                                        Bạn chưa có public key / chứng thư số
+                                        Bạn chưa được cấp cặp khóa RSA và chứng thư số
                                     </c:otherwise>
                                 </c:choose>
                             </h4>
@@ -282,6 +282,10 @@
 
         return false;
     }
+
+    <c:if test="${param.lostKey == '1'}">
+    showRevokeModal();
+    </c:if>
 </script>
 </body>
 </html>

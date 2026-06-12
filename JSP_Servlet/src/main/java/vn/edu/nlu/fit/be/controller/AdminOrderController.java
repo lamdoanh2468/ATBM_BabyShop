@@ -83,7 +83,8 @@ public class AdminOrderController extends HttpServlet {
                         }
                     }
                 } catch (Exception stockEx) {
-                    stockEx.printStackTrace();
+                    String errorMessage = stockEx.getMessage();
+                    System.out.println("Stock update error: " + errorMessage);
                     stockUpdated = false;
                 }
 
@@ -94,7 +95,6 @@ public class AdminOrderController extends HttpServlet {
                     resp.getWriter().write("PARTIAL");
                 }
             } catch (Exception e) {
-                e.printStackTrace();
                 resp.setContentType("text/plain");
                 resp.getWriter().write("FAIL: " + e.getMessage());
             }

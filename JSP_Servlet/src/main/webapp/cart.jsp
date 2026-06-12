@@ -311,12 +311,13 @@
                     btn.classList.add('disabled');
                     btn.removeAttribute('href');
                     btn.removeAttribute('onclick');
-                    btn.innerHTML = '<i class="fa-solid fa-lock"></i> Private key đã tải';
+                    btn.innerHTML = '<i class="fa-solid fa-lock"></i> Bạn đã tải private key';
                     btn.style.pointerEvents = 'none';
                     btn.style.opacity = '0.6';
                     btn.style.cursor = 'not-allowed';
                 }, 300);
             }
+
             if (!window.Swal) {
                 window.Swal = {
                     fire: function (options) {
@@ -352,8 +353,8 @@
                 html: `
                                     <div class="sign-popup-content">
                                         <p class="sign-popup-desc">
-                                            Đơn hàng đã được tạo ở trạng thái <strong>WAITING_SIGNATURE</strong>.
-                                            Vui lòng tải dữ liệu ký, ký bằng private key, rồi upload file chữ ký để hoàn tất xác nhận.
+                                            Đơn hàng đã được tạo ở trạng thái <strong>CHỜ KÝ</strong>.
+                                            Vui lòng tải dữ liệu đơn hàng, ký bằng private key, rồi upload file chữ ký để hoàn tất xác nhận.
                                         </p>
 
                                         <div class="sign-popup-hash">
@@ -361,40 +362,90 @@
                                             <code>${sessionScope.signOrderHash}</code>
                                         </div>
 
-                                        <div class="sign-popup-actions">
-                                            <a class="sign-popup-btn primary"
-                                               href="${pageContext.request.contextPath}${sessionScope.signingUrl}">
-                                                <i class="fa-solid fa-file-arrow-down"></i>
-                                                Tải order hash
-                                            </a>
-                                            <a class="sign-popup-btn"
-                                               href="${pageContext.request.contextPath}/order-sign/tool?orderId=${sessionScope.signOrderId}">
-                                                <i class="fa-solid fa-screwdriver-wrench"></i>
-                                                Tải keytool
-                                            </a>
-                                            <c:choose>
-                                                <c:when test="${not empty sessionScope.privateKeyUrl}">
-                                                    <a id="downloadPrivateKeyBtn"
-                                                       class="sign-popup-btn warning"
-                                                       href="${pageContext.request.contextPath}${sessionScope.privateKeyUrl}"
-                                                       onclick="disablePrivateKeyButton(this)">
-                                                        <i class="fa-solid fa-key"></i>
-                                                        Tải private key
-                                                    </a>
-                                                </c:when>
-                                                <c:otherwise>
-                                                    <a class="sign-popup-btn warning"
-                                                       href="${pageContext.request.contextPath}/security-key">
-                                                        <i class="fa-solid fa-key"></i>
-                                                        Tạo private key mới
-                                                    </a>
-                                                </c:otherwise>
-                                            </c:choose>
-                                            <a class="sign-popup-btn success"
-                                               href="${pageContext.request.contextPath}/upload-signature">
-                                                <i class="fa-solid fa-cloud-arrow-up"></i>
-                                                Upload chữ ký
-                                            </a>
+                                        <div class="sign-popup-steps">
+    <a class="sign-step-card primary"
+       href="${pageContext.request.contextPath}${sessionScope.signingUrl}">
+        <div class="sign-step-icon">
+            <i class="fa-solid fa-file-arrow-down"></i>
+        </div>
+        <div class="sign-step-text">
+            <strong>1. Tải dữ liệu đơn hàng để ký</strong>
+            <span>Tải dữ liệu đã băm của đơn hàng về máy.</span>
+        </div>
+    </a>
+
+    <a class="sign-step-card"
+       href="${pageContext.request.contextPath}/order-sign/tool?orderId=${sessionScope.signOrderId}">
+        <div class="sign-step-icon">
+            <i class="fa-solid fa-screwdriver-wrench"></i>
+        </div>
+        <div class="sign-step-text">
+            <strong>2. Tải tool ký</strong>
+            <span>Dùng tool để ký dữ liệu đơn hàng bằng private key.</span>
+        </div>
+    </a>
+
+    <a class="sign-step-card success"
+       href="${pageContext.request.contextPath}/upload-signature" target="_blank">
+        <div class="sign-step-icon">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+        </div>
+        <div class="sign-step-text">
+            <strong>3. Upload chữ ký</strong>
+            <span>Tải file chữ ký lên để hoàn tất xác nhận.</span>
+        </div>
+    </a>
+</div>
+
+<div class="sign-key-box">
+    <div class="sign-key-main">
+        <div class="sign-key-icon">
+            <i class="fa-solid fa-key"></i>
+        </div>
+
+        <div class="sign-key-text">
+            <strong>Private key của bạn</strong>
+
+            <c:choose>
+                <c:when test="${not empty sessionScope.privateKeyUrl}">
+                    <span>Hệ thống vừa cấp private key mới. Hãy tải ngay và lưu ở nơi an toàn.</span>
+                </c:when>
+
+                <c:otherwise>
+                    <span>Hãy dùng file private key đã lưu trên máy cá nhân để ký đơn hàng.</span>
+                </c:otherwise>
+            </c:choose>
+        </div>
+    </div>
+
+                                            <div class="sign-key-actions">
+                                                <c:choose>
+                                                    <c:when test="${not empty sessionScope.privateKeyUrl}">
+                                                        <a id="downloadPrivateKeyBtn"
+                                                           class="sign-key-btn"
+                                                           href="${pageContext.request.contextPath}${sessionScope.privateKeyUrl}"
+                                                           onclick="disablePrivateKeyButton(this)">
+                                                            <i class="fa-solid fa-download"></i>
+                                                            Tải private key
+                                                        </a>
+                                                    </c:when>
+
+                                                    <c:otherwise>
+                                                        <button type="button"
+                                                                class="sign-key-btn disabled"
+                                                                disabled>
+                                                            <i class="fa-solid fa-lock"></i>
+                                                            Đã lưu trên máy
+                                                        </button>
+                                                    </c:otherwise>
+                                                </c:choose>
+
+                                                <a class="sign-lost-key-link"
+                                                   href="${pageContext.request.contextPath}/security-key?lostKey=1">
+                                                    <i class="fa-solid fa-triangle-exclamation"></i>
+                                                    Tôi bị mất private key
+                                                </a>
+                                            </div>
                                         </div>
 
                                         <p class="sign-popup-note">

@@ -1253,6 +1253,7 @@ iframe {
     line-height: 1;
     cursor: pointer;
 }
+
 .sign-swal-popup {
     border-radius: 24px !important;
     padding: 28px 30px !important;
@@ -1283,4 +1284,178 @@ iframe {
     background: #f1f5f9 !important;
     color: #0f172a !important;
     transform: rotate(90deg);
+}
+
+.sign-popup-steps {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-top: 18px;
+}
+
+.sign-step-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 15px 16px;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    background: #ffffff;
+    color: #1e293b;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.sign-step-card:hover {
+    transform: translateY(-1px);
+    border-color: #cbd5e1;
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+}
+
+.sign-step-card.primary {
+    border-color: #2563eb;
+    background: #eff6ff;
+}
+
+.sign-step-card.success {
+    border-color: #16a34a;
+    background: #f0fdf4;
+}
+
+.sign-step-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f1f5f9;
+    color: #334155;
+    flex-shrink: 0;
+    font-size: 1.05rem;
+}
+
+.sign-step-card.primary .sign-step-icon {
+    background: #2563eb;
+    color: #ffffff;
+}
+
+.sign-step-card.success .sign-step-icon {
+    background: #16a34a;
+    color: #ffffff;
+}
+
+.sign-step-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    text-align: left;
+}
+
+.sign-step-text strong {
+    font-size: 0.95rem;
+    color: #0f172a;
+}
+
+.sign-step-text span {
+    font-size: 0.82rem;
+    color: #64748b;
+    line-height: 1.35;
+}
+
+.sign-key-box {
+    margin-top: 16px;
+    padding: 15px;
+    border-radius: 14px;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+}
+
+.sign-key-main {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.sign-key-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    background: #ffedd5;
+    color: #c2410c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.sign-key-text {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    text-align: left;
+}
+
+.sign-key-text strong {
+    color: #9a3412;
+    font-size: 0.92rem;
+}
+
+.sign-key-text span {
+    color: #9a3412;
+    font-size: 0.82rem;
+    line-height: 1.45;
+}
+
+.sign-key-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+}
+
+.sign-key-btn {
+    border: none;
+    border-radius: 10px;
+    padding: 10px 14px;
+    background: #f97316;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.82rem;
+    text-decoration: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.sign-key-btn:hover {
+    background: #ea580c;
+}
+
+.sign-key-btn.disabled {
+    background: #fdba74;
+    cursor: not-allowed;
+    opacity: 0.75;
+}
+
+.sign-lost-key-link {
+    color: #dc2626;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.sign-lost-key-link:hover {
+    text-decoration: underline;
+}
+
+@media (min-width: 700px) {
+    .sign-popup-steps {
+        grid-template-columns: 1fr;
+    }
 }

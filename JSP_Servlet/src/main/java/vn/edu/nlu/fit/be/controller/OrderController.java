@@ -109,7 +109,7 @@ public class OrderController extends HttpServlet {
 
             // Flow ATBM: đơn mới tạo chưa được xem là thanh toán thành công.
             // Nó phải chờ user ký orderHash bằng private key.
-            ordersService.updateStatus(orderId, OrderStatus.WAITING_SIGNATURE);
+//            ordersService.updateStatus(orderId, OrderStatus.WAITING_SIGNATURE);
 
             // Tạo key/certificate nếu user chưa có certificate hợp lệ.
             // Lưu snapshot bất biến vào ORDER_SIGNS và sinh SHA-256 orderHash.

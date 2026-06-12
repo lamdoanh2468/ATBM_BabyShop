@@ -54,8 +54,8 @@ public class OrdersService {
 
         Order o = new Order();
         o.setAccountId(account.getAccountId());
+        o.setStatusOrder(OrderStatus.WAITING_SIGNATURE);
         o.setVoucherId(voucherId == null ? 0 : voucherId);
-        o.setStatusOrder(OrderStatus.PENDING);
         o.setTotalAmount(totalPrice);
         o.setDeliveryAddress(deliveryAddress.trim());
         o.setPaymentMethod(paymentMethod);
@@ -93,5 +93,8 @@ public class OrdersService {
 
     public List<OrderDetail> getOrderDetailsByOrderId(int orderId) {
         return dao.getOrderDetailsByOrderId(orderId);
+    }
+    public Map<Integer, OrderStatus> getOrderStatusesByAccount(int accountId) {
+        return dao.getOrderStatusesByAccount(accountId);
     }
 }

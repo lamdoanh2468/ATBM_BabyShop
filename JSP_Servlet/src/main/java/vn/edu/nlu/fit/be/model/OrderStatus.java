@@ -1,9 +1,7 @@
 package vn.edu.nlu.fit.be.model;
 
 public enum OrderStatus {
-    PENDING("Pending"),
     WAITING_SIGNATURE("WAITING_SIGNATURE"),
-    CERTIFICATE_INVALID("CERTIFICATE_INVALID"),
     SIGNATURE_INVALID("SIGNATURE_INVALID"),
     TAMPERED("TAMPERED"),
     VERIFIED("VERIFIED"),
@@ -22,7 +20,7 @@ public enum OrderStatus {
 
     public static OrderStatus fromDbValue(String value) {
         if (value == null || value.isBlank()) {
-            return PENDING;
+            return WAITING_SIGNATURE;
         }
 
         String normalized = value.trim();

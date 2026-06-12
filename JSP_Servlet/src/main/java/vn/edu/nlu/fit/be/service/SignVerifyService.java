@@ -252,7 +252,7 @@ public class SignVerifyService {
                 );
 
                 orderSignDao.updateStatus(sign.getOrderSignId(), "VERIFIED");
-                ordersService.updateStatus(signedOrder.getOrderId(), OrderStatus.PENDING);
+                ordersService.updateStatus(signedOrder.getOrderId(), OrderStatus.VERIFIED);
 
             } else {
                 res.setSuccess(false);

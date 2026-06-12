@@ -81,7 +81,7 @@
                             <div class="form-item">
                                 <label>Trạng thái</label>
                                 <select name="status">
-                                    <option value="PENDING" ${order.statusOrder.name() == 'PENDING' ? 'selected' : ''}>Pending</option>
+                                    <option value="WAITING_SIGNATURE" ${order.statusOrder.name() == 'WAITING_SIGNATURE' ? 'selected' : ''}>Waiting Signature</option>
                                     <option value="DONE" ${order.statusOrder.name() == 'DONE' ? 'selected' : ''}>Done</option>
                                     <option value="CANCELLED" ${order.statusOrder.name() == 'CANCELLED' ? 'selected' : ''}>Cancelled</option>
                                 </select>

@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/upload-signature.css">
 </head>
 <body>
-<jsp:include page="header.jsp" />
+<jsp:include page="header.jsp"/>
 
 <div class="pf-page">
     <nav class="pf-breadcrumb">
@@ -35,109 +35,204 @@
             <c:if test="${not empty error}">
                 <div class="notice error">
                     <i class="fa-solid fa-circle-xmark"></i>
-                    ${error}
+                        ${error}
                 </div>
             </c:if>
 
             <c:if test="${not empty verifyResult}">
-                <div class="notice ${verifyResult.success ? 'success' : 'error'}">
-                    <i class="fa-solid ${verifyResult.success ? 'fa-circle-check' : 'fa-circle-xmark'}"></i>
-                    ${verifyResult.message}
+                <div class="verify-result ${verifyResult.success ? 'success' : 'error'}">
+                    <div class="result-icon">
+                        <i class="fa-solid ${verifyResult.success ? 'fa-circle-check' : 'fa-circle-xmark'}"></i>
+                    </div>
+
+                    <div class="result-content">
+                        <h3>
+                                ${verifyResult.success ? 'Xác minh chữ ký thành công' : 'Xác minh chữ ký thất bại'}
+                        </h3>
+
+
+                        <c:if test="${verifyResult.success}">
+                            <div class="result-actions">
+                                <a class="btn-result primary"
+                                   href="${pageContext.request.contextPath}/bought-product">
+                                    <i class="fa-solid fa-box"></i>
+                                    Xem đơn hàng của tôi
+                                </a>
+                            </div>
+                        </c:if>
+                    </div>
                 </div>
             </c:if>
 
-            <form id="uploadForm"
-                  action="${pageContext.request.contextPath}/signature-upload"
-                  method="post"
-                  enctype="multipart/form-data">
-                <label class="file-drop" id="dropZone" for="signedOrder">
-                    <i class="fa-solid fa-cloud-arrow-up"></i>
-                    <span id="fileName">Kéo thả file .json vào đây</span>
-                    <small>hoặc click để chọn file từ máy tính</small>
-                </label>
-                <input id="signedOrder" type="file" name="signedOrderFile" accept=".json" required>
+            <c:if test="${empty verifyResult or not verifyResult.success}">
+                <form id="uploadForm"
+                      action="${pageContext.request.contextPath}/upload-signature"
+                      method="post"
+                      enctype="multipart/form-data">
 
-                <button type="submit" id="btnSubmit" class="btn-submit" disabled>
-                    <i class="fa-solid fa-shield-check"></i> Xác minh & Hoàn tất
-                </button>
-            </form>
+                    <div class="file-upload-box">
+                        <div class="upload-icon">
+                            <i class="fa-solid fa-file-arrow-up"></i>
+                        </div>
 
-            <div class="verify-steps" id="verifySteps">
-                <div class="step" id="step1">
-                    <i class="fa-solid fa-circle-notch fa-spin"></i>
-                    <span>1. Xác thực Certificate bằng CA Public Key...</span>
+                        <div class="upload-text">
+                            <h3>Chọn file chữ ký</h3>
+                            <p>Vui lòng tải lên file <strong>signed_order.json</strong> từ máy tính của bạn.</p>
+                        </div>
+
+                        <label class="btn-choose-file" for="signedOrder">
+                            <i class="fa-solid fa-folder-open"></i>
+                            Chọn file từ máy tính
+                        </label>
+
+                        <div class="selected-file" id="selectedFile" style="display: none;">
+                            <i class="fa-solid fa-file-code"></i>
+                            <span id="fileName">Chưa chọn file</span>
+                        </div>
+                    </div>
+
+                    <input id="signedOrder"
+                           type="file"
+                           name="signedOrderFile"
+                           accept=".json,application/json"
+                           required>
+
+                    <button type="submit" id="btnSubmit" class="btn-submit" disabled>
+                        <i class="fa-solid fa-shield-check"></i>
+                        Xác minh và Hoàn tất
+                    </button>
+                </form>
+
+                <div class="verify-steps" id="verifySteps">
+                    <div class="step" id="step1">
+                        <i class="fa-solid fa-circle-notch fa-spin"></i>
+                        <span>1. Xác thực Certificate bằng CA Public Key...</span>
+                    </div>
+                    <div class="step" id="step2">
+                        <i class="fa-regular fa-circle"></i>
+                        <span>2. Lấy Public Key của user từ Certificate...</span>
+                    </div>
+                    <div class="step" id="step3">
+                        <i class="fa-regular fa-circle"></i>
+                        <span>3. Kiểm tra tính toàn vẹn của chữ ký...</span>
+                    </div>
+                    <div class="step" id="step4">
+                        <i class="fa-regular fa-circle"></i>
+                        <span>4. So sánh Hash hiện tại với dữ liệu đơn hàng...</span>
+                    </div>
                 </div>
-                <div class="step" id="step2">
-                    <i class="fa-regular fa-circle"></i>
-                    <span>2. Lấy Public Key của user từ Certificate...</span>
-                </div>
-                <div class="step" id="step3">
-                    <i class="fa-regular fa-circle"></i>
-                    <span>3. Kiểm tra tính toàn vẹn của chữ ký (Verify Signature)...</span>
-                </div>
-                <div class="step" id="step4">
-                    <i class="fa-regular fa-circle"></i>
-                    <span>4. So sánh Hash hiện tại với dữ liệu đơn hàng...</span>
-                </div>
-            </div>
+            </c:if>
         </div>
     </div>
 </div>
 
-<jsp:include page="footer.jsp" />
+<jsp:include page="footer.jsp"/>
 
 <script>
     const fileInput = document.getElementById("signedOrder");
     const fileNameDisplay = document.getElementById("fileName");
-    const dropZone = document.getElementById("dropZone");
+    const selectedFile = document.getElementById("selectedFile");
     const btnSubmit = document.getElementById("btnSubmit");
+    const uploadForm = document.getElementById("uploadForm");
 
-    fileInput.addEventListener("change", function() {
-        if (this.files && this.files.length > 0) {
-            fileNameDisplay.textContent = this.files[0].name;
-            dropZone.classList.add("active");
-            btnSubmit.disabled = false;
-        } else {
-            fileNameDisplay.textContent = "Kéo thả file .json vào đây";
-            dropZone.classList.remove("active");
-            btnSubmit.disabled = true;
-        }
-    });
+    if (fileInput && btnSubmit) {
+        fileInput.addEventListener("change", function () {
+            if (this.files && this.files.length > 0) {
+                const file = this.files[0];
 
-    // Drag & Drop
-    ["dragenter", "dragover", "dragleave", "drop"].forEach(eventName => {
-        dropZone.addEventListener(eventName, preventDefaults, false);
-    });
+                if (!file.name.toLowerCase().endsWith(".json")) {
+                    this.value = "";
+                    btnSubmit.disabled = true;
 
-    function preventDefaults(e) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
+                    if (selectedFile) {
+                        selectedFile.style.display = "none";
+                    }
 
-    ["dragenter", "dragover"].forEach(eventName => {
-        dropZone.addEventListener(eventName, () => dropZone.classList.add("active"), false);
-    });
+                    Swal.fire({
+                        icon: "error",
+                        title: "File không hợp lệ",
+                        text: "Vui lòng chọn file signed_order.json.",
+                        confirmButtonColor: "#ef4444"
+                    });
 
-    ["dragleave", "drop"].forEach(eventName => {
-        dropZone.addEventListener(eventName, () => {
-            if (!fileInput.files || fileInput.files.length === 0) {
-                dropZone.classList.remove("active");
+                    return;
+                }
+
+                fileNameDisplay.textContent = file.name;
+
+                if (selectedFile) {
+                    selectedFile.style.display = "inline-flex";
+                }
+
+                btnSubmit.disabled = false;
+            } else {
+                fileNameDisplay.textContent = "Chưa chọn file";
+
+                if (selectedFile) {
+                    selectedFile.style.display = "none";
+                }
+
+                btnSubmit.disabled = true;
             }
-        }, false);
-    });
+        });
 
-    dropZone.addEventListener("drop", (e) => {
-        let dt = e.dataTransfer;
-        let files = dt.files;
-        fileInput.files = files;
-        const event = new Event("change");
-        fileInput.dispatchEvent(event);
-    });
+        if (uploadForm) {
+            uploadForm.addEventListener("submit", function (event) {
+                if (!fileInput.files || fileInput.files.length === 0) {
+                    event.preventDefault();
+
+                    Swal.fire({
+                        icon: "warning",
+                        title: "Chưa chọn file",
+                        text: "Vui lòng chọn file signed_order.json trước khi xác minh.",
+                        confirmButtonColor: "#6366f1"
+                    });
+
+                    return;
+                }
+
+                const file = fileInput.files[0];
+
+                if (!file.name.toLowerCase().endsWith(".json")) {
+                    event.preventDefault();
+
+                    Swal.fire({
+                        icon: "error",
+                        title: "File không hợp lệ",
+                        text: "Hệ thống chỉ nhận file .json.",
+                        confirmButtonColor: "#ef4444"
+                    });
+
+                    return;
+                }
+
+                btnSubmit.disabled = true;
+                btnSubmit.classList.add("loading");
+                btnSubmit.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Đang xác minh chữ ký...';
+
+                const verifySteps = document.getElementById("verifySteps");
+
+                if (verifySteps) {
+                    verifySteps.style.display = "block";
+                    updateStep("step1", "active");
+                    updateStep("step2", "default");
+                    updateStep("step3", "default");
+                    updateStep("step4", "default");
+                }
+            });
+        }
+    }
 
     function updateStep(stepId, status) {
         const step = document.getElementById(stepId);
+
+        if (!step) {
+            return;
+        }
+
         const icon = step.querySelector("i");
         step.className = "step " + status;
+
         if (status === "success") {
             icon.className = "fa-solid fa-circle-check";
         } else if (status === "error") {
@@ -147,46 +242,6 @@
         } else {
             icon.className = "fa-regular fa-circle";
         }
-    }
-
-    function handleVerify(event) {
-        event.preventDefault();
-        
-        btnSubmit.style.display = "none";
-        document.getElementById("verifySteps").style.display = "block";
-
-        // Mock verification process
-        updateStep("step1", "active");
-        
-        setTimeout(() => {
-            updateStep("step1", "success");
-            updateStep("step2", "active");
-            
-            setTimeout(() => {
-                updateStep("step2", "success");
-                updateStep("step3", "active");
-                
-                setTimeout(() => {
-                    updateStep("step3", "success");
-                    updateStep("step4", "active");
-                    
-                    setTimeout(() => {
-                        updateStep("step4", "success");
-                        
-                        Swal.fire({
-                            icon: "success",
-                            title: "Hoàn tất đơn hàng!",
-                            html: "Chữ ký hợp lệ. Đơn hàng của bạn đã được xác nhận thành công.<br>Cảm ơn bạn đã mua sắm!",
-                            confirmButtonColor: "#10b981",
-                            confirmButtonText: "Xem đơn hàng của tôi"
-                        }).then(() => {
-                            window.location.href = "${pageContext.request.contextPath}/bought-product";
-                        });
-
-                    }, 1200);
-                }, 1200);
-            }, 800);
-        }, 1000);
     }
 </script>
 </body>

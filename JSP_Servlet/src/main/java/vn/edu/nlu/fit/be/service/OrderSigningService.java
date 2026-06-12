@@ -78,6 +78,7 @@ public class OrderSigningService {
 
         OrderToSignRes signRes = new OrderToSignRes();
         signRes.setOrderId(orderId);
+        signRes.setAccountId(accountId);
         signRes.setCertificateId(cert.getCertificateId());
         signRes.setOrderHash(sign.getOrderHash());
         signRes.setSnapshotJson(sign.getSnapshotJson());

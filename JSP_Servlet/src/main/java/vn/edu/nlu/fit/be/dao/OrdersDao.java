@@ -258,4 +258,26 @@ public class OrdersDao extends BaseDao {
                         .list()
         );
     }
+    public Map<Integer, OrderStatus> getOrderStatusesByAccount(int accountId) {
+        String sql = """
+        SELECT order_id, status
+        FROM orders
+        WHERE account_id = :accountId
+    """;
+
+        return jdbi.withHandle(handle ->
+                handle.createQuery(sql)
+                        .bind("accountId", accountId)
+                        .map((rs, ctx) -> Map.entry(
+                                rs.getInt("order_id"),
+                                OrderStatus.fromDbValue(rs.getString("status"))
+                        ))
+                        .list()
+                        .stream()
+                        .collect(Collectors.toMap(
+                                Map.Entry::getKey,
+                                Map.Entry::getValue
+                        ))
+        );
+    }
 }
