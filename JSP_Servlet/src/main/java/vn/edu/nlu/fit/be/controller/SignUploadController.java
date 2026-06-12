@@ -17,6 +17,8 @@ import vn.edu.nlu.fit.be.service.SignVerifyService;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 
 @WebServlet(name = "SignUploadController", value = "/upload-signature")
 @MultipartConfig(
@@ -31,58 +33,136 @@ public class SignUploadController extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+
         HttpSession session = request.getSession(false);
+
         if (session == null || session.getAttribute("USER") == null) {
             response.sendRedirect(request.getContextPath() + "/login");
             return;
         }
+
         request.getRequestDispatcher("/upload-signature.jsp").forward(request, response);
     }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+
         request.setCharacterEncoding("UTF-8");
+
+        boolean ajax = isAjax(request);
 
         HttpSession session = request.getSession(false);
         if (session == null || session.getAttribute("USER") == null) {
-            response.sendRedirect(request.getContextPath() + "/login");
+            if (ajax) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                writeJson(response, false, "Bạn cần đăng nhập lại", null);
+            } else {
+                response.sendRedirect(request.getContextPath() + "/login");
+            }
             return;
         }
 
         Account account = (Account) session.getAttribute("USER");
-        Part filePart = request.getPart("signedOrderFile");
-        if (filePart == null || filePart.getSize() == 0) {
-            request.setAttribute("error", "Vui lòng upload file signed_order.json");
-            request.getRequestDispatcher("/upload-signature.jsp").forward(request, response);
-            return;
-        }
 
-        if (!isJsonFile(filePart)) {
-            request.setAttribute("error", "File không hợp lệ. Chỉ chấp nhận signed_order.json");
-            request.getRequestDispatcher("/upload-signature.jsp").forward(request, response);
-            return;
-        }
+        try {
+            Part filePart = request.getPart("signedOrderFile");
 
-        try (InputStreamReader reader = new InputStreamReader(filePart.getInputStream(), StandardCharsets.UTF_8)) {
-            SignedOrderReq signedOrder = gson.fromJson(reader, SignedOrderReq.class);
-            SignVerifyResult result = verifyService.verifySignedOrder(signedOrder, account.getAccountId());
+            if (filePart == null || filePart.getSize() == 0) {
+                if (ajax) {
+                    writeJson(response, false, "Vui lòng upload file signed_order.json", null);
+                } else {
+                    request.setAttribute("error", "Vui lòng upload file signed_order.json");
+                    request.getRequestDispatcher("/upload-signature.jsp").forward(request, response);
+                }
+                return;
+            }
 
-            request.setAttribute("verifyResult", result);
-            if (result.isSuccess()) {
-                request.getRequestDispatcher("/upload-signature.jsp").forward(request, response);
-            } else {
+            if (!isJsonFile(filePart)) {
+                if (ajax) {
+                    writeJson(response, false, "File không hợp lệ. Chỉ chấp nhận file .json", null);
+                } else {
+                    request.setAttribute("error", "File không hợp lệ. Chỉ chấp nhận signed_order.json");
+                    request.getRequestDispatcher("/upload-signature.jsp").forward(request, response);
+                }
+                return;
+            }
+
+            try (InputStreamReader reader = new InputStreamReader(
+                    filePart.getInputStream(),
+                    StandardCharsets.UTF_8
+            )) {
+                SignedOrderReq signedOrder = gson.fromJson(reader, SignedOrderReq.class);
+
+                if (signedOrder == null) {
+                    if (ajax) {
+                        writeJson(response, false, "File JSON không đúng định dạng", null);
+                    } else {
+                        request.setAttribute("error", "File JSON không đúng định dạng");
+                        request.getRequestDispatcher("/upload-signature.jsp").forward(request, response);
+                    }
+                    return;
+                }
+
+                SignVerifyResult result = verifyService.verifySignedOrder(
+                        signedOrder,
+                        account.getAccountId()
+                );
+
+                if (ajax) {
+                    Map<String, Object> data = new HashMap<>();
+                    data.put("verified", result.isSuccess());
+
+                    writeJson(
+                            response,
+                            result.isSuccess(),
+                            result.isSuccess()
+                                    ? "Chữ ký hợp lệ. Đơn hàng đã được xác minh."
+                                    : "Chữ ký không hợp lệ hoặc dữ liệu đơn hàng đã bị thay đổi.",
+                            data
+                    );
+                    return;
+                }
+
+                request.setAttribute("verifyResult", result);
                 request.getRequestDispatcher("/upload-signature.jsp").forward(request, response);
             }
         } catch (Exception e) {
-            request.setAttribute("error", "Không thể xác thực chữ ký: " + e.getMessage());
-            request.getRequestDispatcher("/upload-signature.jsp").forward(request, response);
+            if (ajax) {
+                writeJson(response, false, "Không thể xác thực chữ ký: " + e.getMessage(), null);
+            } else {
+                request.setAttribute("error", "Không thể xác thực chữ ký: " + e.getMessage());
+                request.getRequestDispatcher("/upload-signature.jsp").forward(request, response);
+            }
         }
+    }
+
+    private boolean isAjax(HttpServletRequest request) {
+        return "XMLHttpRequest".equals(request.getHeader("X-Requested-With"));
+    }
+
+    private void writeJson(HttpServletResponse response,
+                           boolean success,
+                           String message,
+                           Map<String, Object> data) throws IOException {
+
+        response.setContentType("application/json;charset=UTF-8");
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("success", success);
+        result.put("message", message);
+
+        if (data != null) {
+            result.putAll(data);
+        }
+
+        response.getWriter().write(gson.toJson(result));
     }
 
     private boolean isJsonFile(Part filePart) {
         String submittedFileName = filePart.getSubmittedFileName();
         String contentType = filePart.getContentType();
+
         return (submittedFileName != null && submittedFileName.toLowerCase().endsWith(".json"))
                 || "application/json".equalsIgnoreCase(contentType);
     }

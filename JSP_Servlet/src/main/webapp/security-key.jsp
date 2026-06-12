@@ -90,12 +90,6 @@
                     </div>
                 </c:if>
 
-                <c:if test="${param.downloadError == '1'}">
-                    <div class="sk-message error">
-                        <i class="fas fa-exclamation-circle"></i>
-                        Không thể tải private key. Link tải private key chỉ khả dụng ngay sau khi tạo khóa mới.
-                    </div>
-                </c:if>
 
                 <!-- MAIN KEY CARD -->
                 <div class="sk-card">
@@ -159,15 +153,6 @@
                             <i class="fas fa-triangle-exclamation"></i>
                             Báo mất private key
                         </button>
-
-                        <c:if test="${canDownloadPrivateKey}">
-                            <a class="sk-btn primary"
-                               href="${pageContext.request.contextPath}/security-key/download-private-key"
-                               onclick="return confirmDownloadPrivateKey(event)">
-                                <i class="fas fa-key"></i>
-                                Tải private key
-                            </a>
-                        </c:if>
 
                         <button type="button" class="sk-btn">
                             <i class="fas fa-certificate"></i>

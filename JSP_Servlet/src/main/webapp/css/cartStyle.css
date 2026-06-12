@@ -1440,6 +1440,13 @@ iframe {
     opacity: 0.75;
 }
 
+.sign-step-button {
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+}
+
 .sign-lost-key-link {
     color: #dc2626;
     font-size: 0.82rem;
