@@ -36,6 +36,25 @@ public class OrderSignDao extends BaseDao {
         );
     }
 
+    public OrderSign findLatestWaitingByAccountId(long accountId) {
+        String sql = """
+                    SELECT *
+                    FROM order_signs
+                    WHERE account_id = :accountId
+                      AND status = 'WAITING_SIGNATURE'
+                    ORDER BY created_at DESC
+                    LIMIT 1
+                """;
+
+        return jdbi.withHandle(handle ->
+                handle.createQuery(sql)
+                        .bind("accountId", accountId)
+                        .mapToBean(OrderSign.class)
+                        .findOne()
+                        .orElse(null)
+        );
+    }
+
     public java.util.List<OrderSign> findByStatus(String status) {
         String sql = "SELECT * FROM order_signs WHERE status = :status ORDER BY created_at DESC";
         return jdbi.withHandle(handle ->
