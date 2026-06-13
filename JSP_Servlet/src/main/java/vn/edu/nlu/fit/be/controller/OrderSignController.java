@@ -1,6 +1,10 @@
 package vn.edu.nlu.fit.be.controller;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+
 import com.google.gson.Gson;
+
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.annotation.WebServlet;
@@ -9,25 +13,20 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import vn.edu.nlu.fit.be.dto.OrderToSignRes;
-import vn.edu.nlu.fit.be.dto.SignPackageRes;
 import vn.edu.nlu.fit.be.model.Account;
+import vn.edu.nlu.fit.be.service.CertificateService;
 import vn.edu.nlu.fit.be.service.OrderSigningService;
 import vn.edu.nlu.fit.be.service.OrdersService;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-
 @WebServlet(name = "OrderSignController", urlPatterns = {
         "/order-sign",
-        "/order-sign/package",
-        "/order-sign/order-json",
-        "/order-sign/private-key",
-        "/order-sign/tool"
+        "/order-sign/order-json"
 })
 public class OrderSignController extends HttpServlet {
 
     private final Gson gson = new Gson();
     private final OrdersService ordersService = new OrdersService();
+    private final CertificateService certificateService = new CertificateService();
     private final OrderSigningService orderSigningService = new OrderSigningService();
 
     @Override
@@ -43,41 +42,58 @@ public class OrderSignController extends HttpServlet {
         String path = request.getServletPath();
 
         if ("/order-sign".equals(path)) {
-            request.getRequestDispatcher("/order-sign.jsp").forward(request, response);
+            showOrderSignPage(request, response, account);
             return;
         }
 
-        int orderId = parseOrderId(request);
+        if ("/order-sign/order-json".equals(path)) {
+            downloadOrderToSignJson(request, response, account);
+            return;
+        }
+
+        response.sendError(HttpServletResponse.SC_NOT_FOUND);
+    }
+
+    private void showOrderSignPage(HttpServletRequest request,
+                                   HttpServletResponse response,
+                                   Account account) throws ServletException, IOException {
+        Integer orderId = parseOrderIdOrNull(request);
+
+        if (orderId != null) {
+            if (!ordersService.isOwner(orderId, account.getAccountId())) {
+                response.sendRedirect(request.getContextPath() + "/error/403.jsp");
+                return;
+            }
+
+            OrderToSignRes orderToSign = orderSigningService.getOrderToSign(orderId, account.getAccountId());
+            request.setAttribute("orderId", orderId);
+            request.setAttribute("orderToSign", orderToSign);
+        }
+
+        request.setAttribute("canDownloadPrivateKey", certificateService.hasPendingPrivateKey(account.getAccountId()));
+        request.getRequestDispatcher("/order-sign.jsp").forward(request, response);
+    }
+
+    private void downloadOrderToSignJson(HttpServletRequest request,
+                                         HttpServletResponse response,
+                                         Account account) throws IOException {
+        Integer orderId = parseOrderIdOrNull(request);
+        if (orderId == null) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing orderId");
+            return;
+        }
+
         if (!ordersService.isOwner(orderId, account.getAccountId())) {
             response.sendRedirect(request.getContextPath() + "/error/403.jsp");
             return;
         }
 
-        switch (path) {
-            case "/order-sign/package" -> showSigningPackage(request, response, orderId, account);
-            case "/order-sign/order-json" -> downloadOrderToSignJson(response, orderId, account);
-            case "/order-sign/private-key" -> downloadPrivateKeyOnce(response, orderId, account);
-            case "/order-sign/tool" -> downloadSigningTool(response);
-            default -> response.sendError(HttpServletResponse.SC_NOT_FOUND);
-        }
-    }
-
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-        doGet(request, response);
-    }
-
-    private void showSigningPackage(HttpServletRequest request, HttpServletResponse response, int orderId, Account account)
-            throws ServletException, IOException {
-        SignPackageRes signingPackage = orderSigningService.getSigningPackage(orderId, account.getAccountId());
-        request.setAttribute("signingPackage", signingPackage);
-        request.setAttribute("orderId", orderId);
-        request.getRequestDispatcher("/order-sign.jsp").forward(request, response);
-    }
-
-    private void downloadOrderToSignJson(HttpServletResponse response, int orderId, Account account) throws IOException {
         OrderToSignRes payload = orderSigningService.getOrderToSign(orderId, account.getAccountId());
+        if (payload == null) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, "Order signing payload not found");
+            return;
+        }
+
         writeDownload(
                 response,
                 "application/json; charset=UTF-8",
@@ -86,35 +102,28 @@ public class OrderSignController extends HttpServlet {
         );
     }
 
-    private void downloadPrivateKeyOnce(HttpServletResponse response, int orderId, Account account) throws IOException {
-        String privateKeyPem = orderSigningService.consumePrivateKeyPem(orderId, account.getAccountId());
-        if (privateKeyPem == null || privateKeyPem.isBlank()) {
-            response.sendError(HttpServletResponse.SC_NOT_FOUND, "Private key chỉ được tải một lần hoặc user đã có key trước đó");
-            return;
+    private Integer parseOrderIdOrNull(HttpServletRequest request) {
+        String value = request.getParameter("orderId");
+        if (value == null || value.isBlank()) {
+            return null;
         }
 
-        writeDownload(
-                response,
-                "application/x-pem-file; charset=UTF-8",
-                "private_key_account_" + account.getAccountId() + ".pem",
-                privateKeyPem.getBytes(StandardCharsets.UTF_8)
-        );
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
-    private void downloadSigningTool(HttpServletResponse response) throws IOException {
-        byte[] jarBytes = orderSigningService.loadSigningTool();
-        writeDownload(response, "application/zip", "signing-tool.zip", jarBytes);
-    }
-
-    private int parseOrderId(HttpServletRequest request) {
-        return Integer.parseInt(request.getParameter("orderId"));
-    }
-
-    private void writeDownload(HttpServletResponse response, String contentType, String filename, byte[] bytes)
-            throws IOException {
+    private void writeDownload(HttpServletResponse response,
+                               String contentType,
+                               String filename,
+                               byte[] bytes) throws IOException {
         response.setContentType(contentType);
         response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
+        response.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
         response.setContentLength(bytes.length);
+
         try (ServletOutputStream out = response.getOutputStream()) {
             out.write(bytes);
         }

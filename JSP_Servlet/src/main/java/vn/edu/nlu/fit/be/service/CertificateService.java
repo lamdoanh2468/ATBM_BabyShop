@@ -2,8 +2,8 @@ package vn.edu.nlu.fit.be.service;
 
 import jakarta.servlet.http.HttpServletResponse;
 import vn.edu.nlu.fit.be.dao.CertificateDao;
+import vn.edu.nlu.fit.be.model.CertificateStatus;
 import vn.edu.nlu.fit.be.model.Certificate;
-import vn.edu.nlu.fit.be.model.UserCertificate;
 import vn.edu.nlu.fit.be.util.CryptoUtil;
 
 import java.io.IOException;
@@ -43,16 +43,16 @@ public class CertificateService {
         return workingDir.resolve("data");
     }
 
-    public List<UserCertificate> findRevokedByAccountId(int accountId) {
+    public List<Certificate> findRevokedByAccountId(int accountId) {
         return dao.findRevokedByAccountId(accountId);
     }
 
-    public Optional<UserCertificate> getActiveCertByAccountId(int accountId) {
+    public Optional<Certificate> getActiveCertByAccountId(int accountId) {
         return dao.findActiveByAccountId(accountId);
     }
 
     public void revokeActiveCertByLostKey(int accountId, String reason) {
-        Optional<UserCertificate> cert = dao.findActiveByAccountId(accountId);
+        Optional<Certificate> cert = dao.findActiveByAccountId(accountId);
         cert.ifPresent(
                 userCertificate -> dao.markLostKeyById(userCertificate.getCertificateId(), reason));
     }
@@ -75,11 +75,11 @@ public class CertificateService {
         certificate.setPublicKeyPem(CryptoUtil.toPemPublicKey(userKeyPair.getPublic()));
         certificate.setCertificatePem(CryptoUtil.toPemCertificate(userCert));
         certificate.setSerialNumber(Long.toString(userCert.getSerialNumber().longValue()));
-        certificate.setStatus("Active");
+        certificate.setStatus(CertificateStatus.ACTIVE);
         certificate.setIssuedAt(new Timestamp(new Date().getTime()));
         certificate.setExpiredAt(new Timestamp(userCert.getNotAfter().getTime()));
 
-        long id = dao.createCertificate(certificate);
+        int id = dao.createCertificate(certificate);
         certificate.setCertificateId(id);
 
         // write private key to temporary file for one-time download
@@ -103,12 +103,12 @@ public class CertificateService {
     }
 
     public String getActiveCertPem(int accountId) {
-        Optional<UserCertificate> c = dao.findActiveByAccountId(accountId);
-        return c.map(UserCertificate::getCertificatePem).orElse(null);
+        Optional<Certificate> c = dao.findActiveByAccountId(accountId);
+        return c.map(Certificate::getCertificatePem).orElse(null);
     }
 
     public void ensureActiveCert(int accountId) throws Exception {
-        Optional<UserCertificate> c = dao.findActiveByAccountId(accountId);
+        Optional<Certificate> c = dao.findActiveByAccountId(accountId);
         if (c.isEmpty()) {
             createNewCertAccount(accountId);
         }

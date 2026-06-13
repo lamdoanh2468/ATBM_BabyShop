@@ -1,15 +1,14 @@
 package vn.edu.nlu.fit.be.dao;
 
-import vn.edu.nlu.fit.be.model.Certificate;
 import vn.edu.nlu.fit.be.model.CertificateStatus;
-import vn.edu.nlu.fit.be.model.UserCertificate;
+import vn.edu.nlu.fit.be.model.Certificate;
 
 import java.util.List;
 import java.util.Optional;
 
 public class CertificateDao extends BaseDao {
 
-    public Optional<UserCertificate> findByAccountId(int accountId) {
+    public Optional<Certificate> findByAccountId(int accountId) {
         String sql = """
                 SELECT certificate_id, account_id, public_key_pem, certificate_pem, status,
                        created_at, expires_at,lost_at, revoked_at, revoke_reason
@@ -20,11 +19,11 @@ public class CertificateDao extends BaseDao {
                 """;
         return jdbi.withHandle(handle -> handle.createQuery(sql)
                 .bind("accountId", accountId)
-                .mapToBean(UserCertificate.class)
+                .mapToBean(Certificate.class)
                 .findOne());
     }
 
-    public Optional<UserCertificate> findActiveByAccountId(int accountId) {
+    public Optional<Certificate> findActiveByAccountId(int accountId) {
         String sql = """
                 SELECT certificate_id, account_id, public_key_pem, certificate_pem, status,
                        created_at, expires_at, revoked_at,lost_at, revoke_reason
@@ -38,11 +37,11 @@ public class CertificateDao extends BaseDao {
 
         return jdbi.withHandle(handle -> handle.createQuery(sql)
                 .bind("accountId", accountId)
-                .mapToBean(UserCertificate.class)
+                .mapToBean(Certificate.class)
                 .findOne());
     }
 
-    public Optional<UserCertificate> findByCertIdAccID(int certificateId, int accountId) {
+    public Optional<Certificate> findByCertIdAccID(int certificateId, int accountId) {
         String sql = """
                 SELECT certificate_id, account_id, public_key_pem, certificate_pem, status,
                        created_at, expires_at, revoked_at, lost_at, revoke_reason
@@ -53,11 +52,11 @@ public class CertificateDao extends BaseDao {
         return jdbi.withHandle(handle -> handle.createQuery(sql)
                 .bind("certificateId", certificateId)
                 .bind("accountId", accountId)
-                .mapToBean(UserCertificate.class)
+                .mapToBean(Certificate.class)
                 .findOne());
     }
 
-    public List<UserCertificate> findRevokedByAccountId(int accountId) {
+    public List<Certificate> findRevokedByAccountId(int accountId) {
         String sql = """
                 SELECT certificate_id, account_id, public_key_pem, certificate_pem, status,
                        created_at, expires_at, revoked_at, lost_at, revoke_reason
@@ -69,7 +68,7 @@ public class CertificateDao extends BaseDao {
 
         return jdbi.withHandle(handle -> handle.createQuery(sql)
                 .bind("accountId", accountId)
-                .mapToBean(UserCertificate.class)
+                .mapToBean(Certificate.class)
                 .list());
     }
 
@@ -134,11 +133,7 @@ public class CertificateDao extends BaseDao {
                 .execute()) > 0;
     }
 
-    public boolean isUsable(UserCertificate certificate) {
-        return certificate != null && certificate.getStatus() == CertificateStatus.ACTIVE;
-    }
-
-    public long createCertificate(Certificate model) {
+    public Integer createCertificate(Certificate model) {
         return jdbi.withHandle(handle -> handle.createUpdate("""
                         INSERT INTO certificates (account_id, public_key_pem, certificate_pem, status, created_at, expires_at)
                         VALUES (:accountId, :publicKeyPem, :certificatePem, 'ACTIVE', NOW(), DATE_ADD(NOW(), INTERVAL 365 DAY))
@@ -147,7 +142,7 @@ public class CertificateDao extends BaseDao {
                 .bind("publicKeyPem", model.getPublicKeyPem())
                 .bind("certificatePem", model.getCertificatePem())
                 .executeAndReturnGeneratedKeys("certificate_id")
-                .mapTo(Long.class)
+                .mapTo(Integer.class)
                 .one());
     }
 

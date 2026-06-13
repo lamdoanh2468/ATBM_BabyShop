@@ -1,33 +1,31 @@
 package vn.edu.nlu.fit.be.controller;
 
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
 import com.google.gson.Gson;
+
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import vn.edu.nlu.fit.be.dto.OrderToSignRes;
-import vn.edu.nlu.fit.be.dto.SignPackageRes;
+import vn.edu.nlu.fit.be.dto.CheckoutSignResult;
 import vn.edu.nlu.fit.be.model.Account;
 import vn.edu.nlu.fit.be.model.Cart;
-import vn.edu.nlu.fit.be.model.CartItem.CartItem;
 import vn.edu.nlu.fit.be.model.PaymentMethod;
 import vn.edu.nlu.fit.be.model.Voucher;
-import vn.edu.nlu.fit.be.service.*;
-
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import vn.edu.nlu.fit.be.service.CheckoutSigningService;
+import vn.edu.nlu.fit.be.service.VoucherService;
 
 @WebServlet(name = "OrderController", value = "/order")
 public class OrderController extends HttpServlet {
 
+    private final Gson gson = new Gson();
     private final VoucherService voucherService = new VoucherService();
-    private final OrdersService ordersService = new OrdersService();
-    private final StockProductService stockProductService = new StockProductService();
-    private final OrderSigningService orderSigningService = new OrderSigningService();
-    private final CertificateService certificateService = new CertificateService();
+    private final CheckoutSigningService checkoutSigningService = new CheckoutSigningService();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -40,9 +38,9 @@ public class OrderController extends HttpServlet {
             throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
 
-        boolean ajax = "XMLHttpRequest".equals(request.getHeader("X-Requested-With"));
-
+        boolean ajax = isAjax(request);
         HttpSession session = request.getSession(false);
+
         if (session == null || session.getAttribute("USER") == null) {
             if (ajax) {
                 writeJson(response, false, "Bạn cần đăng nhập trước khi thanh toán", null);
@@ -66,11 +64,7 @@ public class OrderController extends HttpServlet {
 
         String action = request.getParameter("orderAction");
         String deliveryAddress = trimToNull(request.getParameter("deliveryAddress"));
-        String voucherCode = trimToNull(request.getParameter("voucherCode"));
-        if (voucherCode == null) {
-            voucherCode = (String) session.getAttribute("voucherCode");
-        }
-
+        String voucherCode = resolveVoucherCode(request, session);
         PaymentMethod paymentMethod = parsePaymentMethod(request.getParameter("paymentMethod"));
 
         if ("applyVoucher".equals(action)) {
@@ -84,24 +78,7 @@ public class OrderController extends HttpServlet {
         }
 
         if (deliveryAddress == null) {
-            if (ajax) {
-                writeJson(response, false, "Vui lòng nhập địa chỉ giao hàng", null);
-            } else {
-                request.setAttribute("error", "Vui lòng nhập địa chỉ giao hàng");
-                request.getRequestDispatcher("/cart.jsp").forward(request, response);
-            }
-            return;
-        }
-        if (!stockProductService.checkAvailable(cart)) {
-            var outOfStockProducts = stockProductService.getOutOfStockProducts(cart);
-            String message = "Không đủ số lượng tồn kho cho: " + String.join(", ", outOfStockProducts);
-
-            if (ajax) {
-                writeJson(response, false, message, null);
-            } else {
-                session.setAttribute("stockError", message);
-                response.sendRedirect(request.getContextPath() + "/cart?paid=0");
-            }
+            handleCheckoutError(request, response, ajax, "Vui lòng nhập địa chỉ giao hàng");
             return;
         }
 
@@ -110,70 +87,43 @@ public class OrderController extends HttpServlet {
         int finalPrice = calculateFinalPrice(cart, session);
 
         try {
-            certificateService.ensureActiveCert(account.getAccountId());
-
-            int orderId = ordersService.createOrderFromCart(
+            CheckoutSignResult result = checkoutSigningService.checkoutAndPrepareSigning(
                     account,
                     cart,
                     deliveryAddress,
                     paymentMethod,
                     voucherId,
-                    finalPrice);
+                    finalPrice
+            );
 
-            for (CartItem item : cart.getItems()) {
-                stockProductService.updateStockProduct(item.getProduct().getProductId(), item.getQuantity());
-            }
-
-            // Tạo key/certificate nếu user chưa có certificate hợp lệ.
-            // Lưu snapshot bất biến vào ORDER_SIGNS và sinh SHA-256 orderHash.
-            orderSigningService.createOrderSignSnapshot(orderId, account.getAccountId());
-            OrderToSignRes orderToSign = orderSigningService.getOrderToSign(orderId, account.getAccountId());
-            SignPackageRes signingPackage = orderSigningService.getSigningPackage(orderId, account.getAccountId());
-
-            String orderHash = orderToSign == null ? "" : orderToSign.getOrderHash();
-
-            session.setAttribute("showSignPopup", true);
-            session.setAttribute("signOrderId", orderId);
-            session.setAttribute("signOrderHash", orderHash);
-            session.setAttribute("signingUrl", signingPackage.getSigningUrl());
-
-            if (certificateService.hasPendingPrivateKey(account.getAccountId())) {
-                session.setAttribute("privateKeyUrl", "/security-key/download-private-key");
-            } else {
-                session.removeAttribute("privateKeyUrl");
-            }
-
+            setSigningSession(session, result);
             clearCartSession(session, cart);
 
             if (ajax) {
-                Map<String, Object> data = new HashMap<>();
-                data.put("orderId", orderId);
-                data.put("orderHash", orderHash);
-                data.put("signingUrl", request.getContextPath() + signingPackage.getSigningUrl());
-                data.put("signToolUrl", request.getContextPath() + "/security-key/download-sign-app");
-
-                if (certificateService.hasPendingPrivateKey(account.getAccountId())) {
-                    data.put("privateKeyUrl", request.getContextPath() + "/security-key/download-private-key");
-                }
-
-                writeJson(response, true, "Tạo đơn hàng chờ ký thành công", data);
+                writeJson(response, true, "Tạo đơn hàng chờ ký thành công", buildAjaxData(request, result));
                 return;
             }
 
             response.sendRedirect(request.getContextPath() + "/cart?waitingSignature=1");
         } catch (Exception e) {
-            if (ajax) {
-                writeJson(response, false, "Không thể tạo đơn hàng cần ký: " + e.getMessage(), null);
-            } else {
-                request.setAttribute("error", "Không thể tạo đơn hàng cần ký: " + e.getMessage());
-                request.getRequestDispatcher("/cart.jsp").forward(request, response);
-            }
+            handleCheckoutError(request, response, ajax, "Không thể tạo đơn hàng cần ký: " + e.getMessage());
         }
     }
 
-    private void applyVoucher(HttpServletRequest request, HttpServletResponse response, HttpSession session,
-                              String deliveryAddress, PaymentMethod paymentMethod, String voucherCode)
-            throws ServletException, IOException {
+    private String resolveVoucherCode(HttpServletRequest request, HttpSession session) {
+        String voucherCode = trimToNull(request.getParameter("voucherCode"));
+        if (voucherCode == null) {
+            voucherCode = (String) session.getAttribute("voucherCode");
+        }
+        return voucherCode;
+    }
+
+    private void applyVoucher(HttpServletRequest request,
+                              HttpServletResponse response,
+                              HttpSession session,
+                              String deliveryAddress,
+                              PaymentMethod paymentMethod,
+                              String voucherCode) throws ServletException, IOException {
         if (voucherCode == null) {
             request.setAttribute("voucherError", "Vui lòng nhập mã voucher");
             request.getRequestDispatcher("/cart.jsp").forward(request, response);
@@ -194,9 +144,11 @@ public class OrderController extends HttpServlet {
         request.getRequestDispatcher("/cart.jsp").forward(request, response);
     }
 
-    private void removeVoucher(HttpServletRequest request, HttpServletResponse response, HttpSession session,
-                               String deliveryAddress, PaymentMethod paymentMethod)
-            throws ServletException, IOException {
+    private void removeVoucher(HttpServletRequest request,
+                               HttpServletResponse response,
+                               HttpSession session,
+                               String deliveryAddress,
+                               PaymentMethod paymentMethod) throws ServletException, IOException {
         session.removeAttribute("discountAmount");
         session.removeAttribute("voucherCode");
         session.removeAttribute("finalPrice");
@@ -210,6 +162,48 @@ public class OrderController extends HttpServlet {
         Integer discountAmount = (Integer) session.getAttribute("discountAmount");
         int discount = discountAmount == null ? 0 : Math.min(discountAmount, totalPrice);
         return totalPrice - discount;
+    }
+
+    private void setSigningSession(HttpSession session, CheckoutSignResult result) {
+        session.setAttribute("showSignPopup", true);
+        session.setAttribute("signOrderId", result.getOrderId());
+        session.setAttribute("signOrderHash", result.getOrderHash());
+        session.setAttribute("signingUrl", result.getSigningUrl());
+        session.setAttribute("signToolUrl", result.getSignToolUrl());
+
+        if (result.hasPrivateKeyUrl()) {
+            session.setAttribute("privateKeyUrl", result.getPrivateKeyUrl());
+        } else {
+            session.removeAttribute("privateKeyUrl");
+        }
+    }
+
+    private Map<String, Object> buildAjaxData(HttpServletRequest request, CheckoutSignResult result) {
+        Map<String, Object> data = new HashMap<>();
+        String contextPath = request.getContextPath();
+
+        data.put("orderId", result.getOrderId());
+        data.put("orderHash", result.getOrderHash());
+        data.put("signingUrl", contextPath + result.getSigningUrl());
+        data.put("signToolUrl", contextPath + result.getSignToolUrl());
+
+        if (result.hasPrivateKeyUrl()) {
+            data.put("privateKeyUrl", contextPath + result.getPrivateKeyUrl());
+        }
+
+        return data;
+    }
+
+    private void handleCheckoutError(HttpServletRequest request,
+                                     HttpServletResponse response,
+                                     boolean ajax,
+                                     String message) throws ServletException, IOException {
+        if (ajax) {
+            writeJson(response, false, message, null);
+        } else {
+            request.setAttribute("error", message);
+            request.getRequestDispatcher("/cart.jsp").forward(request, response);
+        }
     }
 
     private PaymentMethod parsePaymentMethod(String value) {
@@ -237,8 +231,14 @@ public class OrderController extends HttpServlet {
         session.removeAttribute("paymentMethod");
     }
 
-    private void writeJson(HttpServletResponse response, boolean success, String message, Map<String, Object> data)
-            throws IOException {
+    private boolean isAjax(HttpServletRequest request) {
+        return "XMLHttpRequest".equals(request.getHeader("X-Requested-With"));
+    }
+
+    private void writeJson(HttpServletResponse response,
+                           boolean success,
+                           String message,
+                           Map<String, Object> data) throws IOException {
         response.setContentType("application/json;charset=UTF-8");
 
         Map<String, Object> result = new HashMap<>();
@@ -249,6 +249,6 @@ public class OrderController extends HttpServlet {
             result.putAll(data);
         }
 
-        response.getWriter().write(new Gson().toJson(result));
+        response.getWriter().write(gson.toJson(result));
     }
 }

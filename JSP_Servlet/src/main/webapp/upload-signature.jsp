@@ -22,20 +22,23 @@
     <nav class="pf-breadcrumb">
         <a href="${pageContext.request.contextPath}/">Trang chủ</a>
         <span class="dot">•</span>
-        <a href="${pageContext.request.contextPath}/cart">Giỏ hàng</a>
+        <a href="${pageContext.request.contextPath}/bought-product">Đơn hàng của tôi</a>
         <span class="dot">•</span>
-        <span>Xác minh chữ ký</span>
+        <span>Tải chữ ký điện tử</span>
     </nav>
 
     <div class="upload-page">
         <div class="upload-card">
-            <h2><i class="fa-solid fa-file-shield" style="color: #6366f1;"></i> Xác minh chữ ký điện tử</h2>
-            <p>Vui lòng tải lên file <strong>signed_order.json</strong> mà bạn vừa ký bằng công cụ.</p>
+            <h2>
+                <i class="fa-solid fa-file-shield" style="color: #6366f1;"></i>
+                Tải chữ ký điện tử
+            </h2>
+            <p>Vui lòng tải lên file <strong>signed_order.json</strong> được xuất từ tool ký đơn hàng.</p>
 
             <c:if test="${not empty error}">
                 <div class="notice error">
                     <i class="fa-solid fa-circle-xmark"></i>
-                        ${error}
+                    ${error}
                 </div>
             </c:if>
 
@@ -47,13 +50,13 @@
 
                     <div class="result-content">
                         <h3>
-                                ${verifyResult.success ? 'Xác minh chữ ký thành công' : 'Xác minh chữ ký thất bại'}
+                            ${verifyResult.success ? 'Xác minh chữ ký thành công' : 'Xác minh chữ ký thất bại'}
                         </h3>
 
                         <p>
-                                ${verifyResult.success
-                                        ? 'Chữ ký hợp lệ. Đơn hàng của bạn đã được xác thực.'
-                                        : 'File chữ ký không hợp lệ hoặc dữ liệu đơn hàng không khớp. Vui lòng kiểm tra và tải lại file.'}
+                            ${verifyResult.success
+                                    ? 'Chữ ký hợp lệ. Đơn hàng của bạn đã được xác thực.'
+                                    : 'File chữ ký không hợp lệ hoặc dữ liệu đơn hàng không khớp. Vui lòng kiểm tra và tải lại file.'}
                         </p>
 
                         <c:if test="${verifyResult.success}">
@@ -82,7 +85,7 @@
 
                         <div class="upload-text">
                             <h3>Chọn file chữ ký</h3>
-                            <p>Vui lòng tải lên file <strong>signed_order.json</strong> từ máy tính của bạn.</p>
+                            <p>Hệ thống chỉ nhận file <strong>signed_order.json</strong>.</p>
                         </div>
 
                         <label class="btn-choose-file" for="signedOrder">
@@ -104,10 +107,9 @@
 
                     <button type="submit" id="btnSubmit" class="btn-submit" disabled>
                         <i class="fa-solid fa-shield-check"></i>
-                        Xác minh và Hoàn tất
+                        Xác minh và hoàn tất
                     </button>
                 </form>
-
             </c:if>
         </div>
     </div>

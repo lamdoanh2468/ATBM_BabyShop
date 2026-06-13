@@ -557,7 +557,7 @@
         const orderId = Number(orderData.orderId);
         const orderHash = orderData.orderHash || "";
         const signingUrl = orderData.signingUrl || "#";
-        const signToolUrl = orderData.signToolUrl || (CONTEXT_PATH + "/security-key/download-sign-app");
+        const signToolUrl = orderData.signToolUrl || (CONTEXT_PATH + "/signing-tool/download");
         const privateKeyUrl = normalizeAppUrl(orderData.privateKeyUrl || "");
 
         let privateKeyHtml = "";
@@ -588,7 +588,10 @@
 
             '   <div class="sign-popup-hash">' +
             '       <span>Order Hash SHA-256</span>' +
-            '       <code>' + escapeHtml(orderHash) + '</code>' +
+            '       <code id="orderHashCode">' + escapeHtml(orderHash) + '</code>' +
+            '       <div style="margin-top:0.5rem;">' +
+            '           <button type="button" id="btnDownloadHash" class="sign-download-hash-btn" data-order-id="' + escapeAttr(String(orderId)) + '" data-order-hash="' + escapeAttr(orderHash) + '">Tải hash</button>' +
+            '       </div>' +
             '   </div>' +
 
             '   <div class="sign-popup-steps">' +
@@ -627,6 +630,16 @@
             didOpen: function () {
                 const btnUploadSignature = document.getElementById("btnUploadSignature");
                 const btnReissuePrivateKey = document.getElementById("btnReissuePrivateKey");
+
+                    const btnDownloadHash = document.getElementById("btnDownloadHash");
+
+                    if (btnDownloadHash) {
+                        btnDownloadHash.addEventListener("click", function () {
+                            const oid = this.getAttribute("data-order-id");
+                            const hash = this.getAttribute("data-order-hash") || "";
+                            downloadOrderHash(oid, hash);
+                        });
+                    }
 
                 if (btnUploadSignature) {
                     btnUploadSignature.addEventListener("click", function () {
@@ -701,7 +714,7 @@
                         orderId: orderId,
                         orderHash: data.orderHash || "",
                         signingUrl: data.signingUrl || "#",
-                        signToolUrl: data.signToolUrl || (CONTEXT_PATH + "/security-key/download-sign-app"),
+                        signToolUrl: data.signToolUrl || (CONTEXT_PATH + "/signing-tool/download"),
                         privateKeyUrl: normalizeAppUrl(data.privateKeyUrl || "/security-key/download-private-key")
                     });
                 });
@@ -851,13 +864,37 @@
         return escapeHtml(value);
     }
 
+    function downloadOrderHash(orderId, orderHash) {
+        try {
+            const filename = 'order_hash_' + String(orderId) + '.txt';
+            const blob = new Blob([orderHash || ''], {type: 'text/plain;charset=utf-8'});
+
+            if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+                window.navigator.msSaveOrOpenBlob(blob, filename);
+                return;
+            }
+
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } catch (e) {
+            console.error('Không thể tải hash:', e);
+            Swal.fire({icon: 'error', title: 'Lỗi', text: 'Không thể tạo file hash.'});
+        }
+    }
+
     <c:if test="${not empty sessionScope.signOrderId}">
     window.addEventListener("load", function () {
         showSigningPopup({
             orderId: Number("${sessionScope.signOrderId}"),
             orderHash: "${sessionScope.signOrderHash}",
             signingUrl: "${pageContext.request.contextPath}${sessionScope.signingUrl}",
-            signToolUrl: "${pageContext.request.contextPath}/security-key/download-sign-app",
+            signToolUrl: "${pageContext.request.contextPath}/signing-tool/download",
             privateKeyUrl: "${not empty sessionScope.privateKeyUrl ? pageContext.request.contextPath : ''}${not empty sessionScope.privateKeyUrl ? sessionScope.privateKeyUrl : ''}"
         });
     });
@@ -933,7 +970,7 @@
                 orderId: orderData.orderId,
                 orderHash: data.orderHash || orderData.orderHash || "",
                 signingUrl: data.signingUrl || orderData.signingUrl || "#",
-                signToolUrl: data.signToolUrl || orderData.signToolUrl || (CONTEXT_PATH + "/security-key/download-sign-app"),
+                signToolUrl: data.signToolUrl || orderData.signToolUrl || (CONTEXT_PATH + "/signing-tool/download"),
                 privateKeyUrl: normalizeAppUrl(data.privateKeyUrl || "/security-key/download-private-key")
             });
         } catch (error) {

@@ -115,17 +115,17 @@
 
                             <option value="WAITING_SIGNATURE" ${order.statusOrder eq 'WAITING_SIGNATURE' ? 'selected'
                                     : '' }>
-                                Ch&#7901; k&#253;
+                                Chờ ký
                             </option>
 
                             <option value="SIGNATURE_INVALID" ${order.statusOrder eq 'SIGNATURE_INVALID' ? 'selected'
                                     : '' }>
-                                Ch&#7919; k&#253; &#273;i&#7879;n t&#7917; kh&#244;ng h&#7907;p l&#7879;
+                              Chữ ký điện tử không hợp lệ
                             </option>
 
                             <option value="TAMPERED" ${order.statusOrder eq 'TAMPERED' ? 'selected'
                                     : '' }>
-                                Ch&#7919; k&#253; &#273;i&#7879;n t&#7917; b&#7883; s&#7917;a &#273;&#7893;i
+                                Chữ ký điện tử bị sửa đổi
                             </option>
 
                             <option value="VERIFIED" ${order.statusOrder eq 'VERIFIED' ? 'selected'
@@ -133,7 +133,7 @@
                                 Ch&#7919; k&#253; &#273;i&#7879;n t&#7917; h&#7907;p l&#7879;
                             </option>
                             <option value="DONE" ${order.statusOrder eq 'DONE' ? 'selected' : '' }>
-                                Đã giao hàng
+                                Xác nhận thành công
                             </option>
 
                             <option value="CANCELLED" ${order.statusOrder eq 'CANCELLED'

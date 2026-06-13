@@ -13,6 +13,7 @@ public class OrdersService {
     public Order getOrderById(int orderId) {
         return dao.getOrderById(orderId);
     }
+
     public List<Order> getAll() {
         return dao.getAllOrders();
     }
@@ -75,15 +76,6 @@ public class OrdersService {
         return dao.createOrderWithDetails(o, details);
     }
 
-    public void confirmOrder(int orderId, String status) {
-        dao.updateOrderStatus(orderId, status);
-    }
-
-    public boolean isVerified(int orderId) {
-        Order o = dao.getOrderById(orderId);
-        if (o == null) return false;
-        return o.getStatusOrder() == OrderStatus.VERIFIED || o.getStatusOrder() == OrderStatus.DONE;
-    }
 
     public boolean isOwner(int orderId, int accountId) {
         Order o = dao.getOrderById(orderId);
@@ -94,6 +86,7 @@ public class OrdersService {
     public List<OrderDetail> getOrderDetailsByOrderId(int orderId) {
         return dao.getOrderDetailsByOrderId(orderId);
     }
+
     public Map<Integer, OrderStatus> getOrderStatusesByAccount(int accountId) {
         return dao.getOrderStatusesByAccount(accountId);
     }

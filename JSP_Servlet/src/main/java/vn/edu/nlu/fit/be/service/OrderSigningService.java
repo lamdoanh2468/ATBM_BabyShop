@@ -2,52 +2,31 @@ package vn.edu.nlu.fit.be.service;
 
 import vn.edu.nlu.fit.be.dao.OrderSignDao;
 import vn.edu.nlu.fit.be.dto.OrderToSignRes;
-import vn.edu.nlu.fit.be.dto.SignPackageRes;
 import vn.edu.nlu.fit.be.model.Order;
 import vn.edu.nlu.fit.be.model.OrderDetail;
 import vn.edu.nlu.fit.be.model.OrderSign;
-import vn.edu.nlu.fit.be.model.UserCertificate;
+import vn.edu.nlu.fit.be.model.Certificate;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.security.MessageDigest;
+import java.util.Comparator;
 import java.util.Formatter;
 import java.util.List;
 
 public class OrderSigningService {
 
+    private static final String HASH_ALGORITHM = "SHA-256";
+    private static final String WAITING_SIGNATURE = "WAITING_SIGNATURE";
+
     private final OrdersService ordersService = new OrdersService();
     private final CertificateService certificateService = new CertificateService();
     private final OrderSignDao orderSignDao = new OrderSignDao();
-    private final Path privateKeyDir = CertificateService.resolveDataDir().resolve("private_keys");
 
-    public void createOrderSignSnapshot(int orderId, int accountId) {
-        Order order = ordersService.getOrderById(orderId);
-        if (order == null) throw new IllegalArgumentException("Order not found");
-        if (order.getAccountId() != accountId)
-            throw new IllegalArgumentException("Not your order");
-        List<OrderDetail> ods = ordersService.getOrderDetailsByOrderId(orderId);
 
-        // build deterministic snapshot string
-        StringBuilder sb = new StringBuilder();
-        sb.append("orderId=").append(order.getOrderId()).append(";");
-        sb.append("accountId=").append(order.getAccountId()).append(";");
-        sb.append("voucherId=").append(order.getVoucherId()).append(";");
-        sb.append("total=").append(order.getTotalAmount()).append(";");
-        sb.append("paymentMethod=").append(order.getPaymentMethod()).append(";");
-        sb.append("address=").append(order.getDeliveryAddress()).append(";");
-        sb.append("details=["+"\t");
-        for (OrderDetail od : ods) {
-            sb.append("[\t");
-            sb.append("productId=").append(od.getProductId()).append(";");
-            sb.append("quantity=").append(od.getQuantity()).append(";");
-            sb.append("price=").append(od.getUnitPrice()).append(";");
-            sb.append("]\t");
-        }
-        sb.append("]");
+    public OrderToSignRes createSnapshotAndReturnPayload(int orderId, int accountId) {
+        Order order = getOwnedOrder(orderId, accountId);
+        List<OrderDetail> orderDetails = ordersService.getOrderDetailsByOrderId(orderId);
 
-        String snapshot = sb.toString();
+        String snapshot = buildSnapshot(order, orderDetails);
         String hash = sha256Hex(snapshot);
 
         OrderSign sign = new OrderSign();
@@ -55,26 +34,67 @@ public class OrderSigningService {
         sign.setAccountId(accountId);
         sign.setSnapshotJson(snapshot);
         sign.setOrderHash(hash);
-        sign.setHashAlgorithm("SHA-256");
-        sign.setStatus("WAITING_SIGNATURE");
+        sign.setHashAlgorithm(HASH_ALGORITHM);
+        sign.setStatus(WAITING_SIGNATURE);
 
         orderSignDao.insert(sign);
+
+        return getOrderToSign(orderId, accountId);
     }
 
-    public SignPackageRes getSigningPackage(int orderId, int accountId) {
-        SignPackageRes res = new SignPackageRes();
-        res.setOrderId(orderId);
-        res.setSigningUrl("/order-sign/order-json?orderId=" + orderId);
-        res.setPrivateKeyUrl("/order-sign/private-key?orderId=" + orderId);
-        return res;
+
+    public String calculateCurrentOrderHash(int orderId, int accountId, String storedSnapshot) {
+        String currentSnapshot = buildCurrentSnapshot(orderId, accountId, storedSnapshot);
+        return sha256Hex(currentSnapshot);
+    }
+
+    private String buildCurrentSnapshot(int orderId, int accountId, String storedSnapshot) {
+        Order order = getOwnedOrder(orderId, accountId);
+        List<OrderDetail> orderDetails = ordersService.getOrderDetailsByOrderId(orderId);
+
+        if (isLegacySnapshot(storedSnapshot)) {
+            return buildLegacySnapshot(order, orderDetails);
+        }
+
+        return buildSnapshot(order, orderDetails);
+    }
+
+    private boolean isLegacySnapshot(String storedSnapshot) {
+        return storedSnapshot != null && storedSnapshot.contains("details=[\t[");
+    }
+
+    private String buildLegacySnapshot(Order order, List<OrderDetail> orderDetails) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("orderId=").append(order.getOrderId()).append(";");
+        sb.append("accountId=").append(order.getAccountId()).append(";");
+        sb.append("voucherId=").append(order.getVoucherId()).append(";");
+        sb.append("total=").append(order.getTotalAmount()).append(";");
+        sb.append("paymentMethod=").append(order.getPaymentMethod()).append(";");
+        sb.append("address=").append(nullToEmpty(order.getDeliveryAddress())).append(";");
+        sb.append("details=[").append("\t");
+
+        for (OrderDetail detail : orderDetails) {
+            sb.append("[").append("\t");
+            sb.append("productId=").append(detail.getProductId()).append(";");
+            sb.append("quantity=").append(detail.getQuantity()).append(";");
+            sb.append("price=").append(detail.getUnitPrice()).append(";");
+            sb.append("]").append("\t");
+        }
+
+        sb.append("]");
+        return sb.toString();
     }
 
     public OrderToSignRes getOrderToSign(int orderId, int accountId) {
-        OrderSign sign = orderSignDao.findByOrderId(orderId);
-        if (sign == null) return null;
+        getOwnedOrder(orderId, accountId);
 
-        UserCertificate cert = certificateService.getActiveCertByAccountId(accountId)
-                .orElseThrow(() -> new IllegalStateException("No active certificate"));
+        OrderSign sign = orderSignDao.findByOrderId(orderId);
+        if (sign == null) {
+            return null;
+        }
+
+        Certificate cert = certificateService.getActiveCertByAccountId(accountId).orElseThrow(() -> new IllegalStateException("No active certificate"));
 
         OrderToSignRes signRes = new OrderToSignRes();
         signRes.setOrderId(orderId);
@@ -86,44 +106,55 @@ public class OrderSigningService {
         return signRes;
     }
 
-    public String consumePrivateKeyPem(int orderId, int accountId) {
+    private Order getOwnedOrder(int orderId, int accountId) {
         Order order = ordersService.getOrderById(orderId);
-
         if (order == null) {
             throw new IllegalArgumentException("Order not found");
         }
         if (order.getAccountId() != accountId) {
             throw new IllegalArgumentException("Not your order");
         }
-
-        Path pemPath = privateKeyDir.resolve("account_" + accountId + "_private.key");
-        try {
-            if (!Files.exists(pemPath)) {
-                return null;
-            }
-            String pem = Files.readString(pemPath);
-            Files.delete(pemPath);
-            return pem;
-        } catch (IOException e) {
-            throw new RuntimeException("Cannot consume private key", e);
-        }
+        return order;
     }
 
-    public byte[] loadSigningTool() {
-        // Not implemented - return empty
-        return new byte[0];
+    private String buildSnapshot(Order order, List<OrderDetail> orderDetails) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("orderId=").append(order.getOrderId()).append(";");
+        sb.append("accountId=").append(order.getAccountId()).append(";");
+        sb.append("voucherId=").append(order.getVoucherId()).append(";");
+        sb.append("total=").append(order.getTotalAmount()).append(";");
+        sb.append("paymentMethod=").append(order.getPaymentMethod()).append(";");
+        sb.append("address=").append(nullToEmpty(order.getDeliveryAddress())).append(";");
+        sb.append("details=[");
+
+        orderDetails.stream().sorted(Comparator.comparingInt(OrderDetail::getProductId)).forEach(detail -> sb.append("{").append("productId=").append(detail.getProductId()).append(";").append("quantity=").append(detail.getQuantity()).append(";").append("price=").append(detail.getUnitPrice()).append(";").append("}"));
+
+        sb.append("]");
+        return sb.toString();
+    }
+
+    private String nullToEmpty(String value) {
+        return value == null ? "" : value.trim();
     }
 
     private String sha256Hex(String input) {
         try {
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            MessageDigest md = MessageDigest.getInstance(HASH_ALGORITHM);
             byte[] digest = md.digest(input.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            try (Formatter f = new Formatter()) {
-                for (byte b : digest) f.format("%02x", b);
-                return f.toString();
+            try (Formatter formatter = new Formatter()) {
+                for (byte b : digest) {
+                    formatter.format("%02x", b);
+                }
+                return formatter.toString();
             }
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Cannot hash order snapshot", e);
         }
+    }
+
+    // DEBUG ORDER COMPARISON
+    public String buildCurrentSnapshotForDebug(int orderId, int accountId, String storedSnapshot) {
+        return buildCurrentSnapshot(orderId, accountId, storedSnapshot);
+
     }
 }

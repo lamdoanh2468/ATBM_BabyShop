@@ -26,7 +26,7 @@ public class AdminSignService {
         return orderSignDao.findByOrderId(orderId);
     }
 
-    public Optional<UserCertificate> getCertificateByOrderId(int orderId) {
+    public Optional<Certificate> getCertificateByOrderId(int orderId) {
         OrderSign s = orderSignDao.findByOrderId(orderId);
         if (s == null) return null;
         return certificateDao.findActiveByAccountId((int) s.getAccountId());
