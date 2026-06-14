@@ -45,9 +45,6 @@
                 <li onclick="location.href='${pageContext.request.contextPath}/security-key'">
                     <i class="fas fa-shield-halved"></i> Chữ ký điện tử
                 </li>
-                <li onclick="location.href='${pageContext.request.contextPath}/upload-signature'">
-                    <i class="fas fa-file-shield"></i> Tải chữ ký đơn hàng
-                </li>
             </ul>
         </aside>
 
@@ -64,16 +61,17 @@
                 <c:if test="${param.downloadError == '1'}">
                     <div class="sk-message error">
                         <i class="fas fa-exclamation-circle"></i>
-                        Private key không tồn tại hoặc đã được tải trước đó.
+                        Private key không tồn tại hoặc đã được tải trước đó. Nếu bạn đã mất file private key,
+                        hãy cấp lại chứng thư mới để nhận private key mới.
                     </div>
                 </c:if>
 
                 <c:if test="${param.created == '1'}">
                     <div class="sk-message success">
                         <i class="fas fa-check-circle"></i>
-                        Đã tạo khóa/chứng thư mới thành công.
+                        Đã tạo chứng thư mới và private key mới tương ứng.
                         <c:if test="${canDownloadPrivateKey}">
-                            Vui lòng tải private key ngay và lưu trữ an toàn.
+                            Vui lòng tải private key mới ngay. Private key cũ sẽ không dùng được với chứng thư mới.
                         </c:if>
                     </div>
                 </c:if>
@@ -81,7 +79,29 @@
                 <c:if test="${param.revoked == '1'}">
                     <div class="sk-message success">
                         <i class="fas fa-check-circle"></i>
-                        Chứng thư hiện tại đã được thu hồi và hệ thống đã cấp chứng thư mới.
+                        Chứng thư cũ đã được thu hồi. Hệ thống đã cấp chứng thư mới và private key mới cho bạn.
+                        <c:if test="${canDownloadPrivateKey}">
+                            Vui lòng tải private key mới trước khi ký đơn hàng tiếp theo.
+                        </c:if>
+                    </div>
+                </c:if>
+
+                <c:if test="${canDownloadPrivateKey}">
+                    <div class="sk-message warning">
+                        <i class="fas fa-key"></i>
+                        <div>
+                            <strong>Bạn đang có private key mới chưa tải.</strong>
+                            <br>
+                            Private key này đi kèm chứng thư hiện tại và chỉ được tải một lần.
+                            Nếu mất file này, bạn phải cấp lại chứng thư mới.
+                            <br><br>
+
+                            <a class="sk-btn primary"
+                               href="${pageContext.request.contextPath}/security-key/download-private-key"
+                               onclick="return confirmDownloadPrivateKey(event)">
+                                Tải private key mới ngay
+                            </a>
+                        </div>
                     </div>
                 </c:if>
 
@@ -164,15 +184,25 @@
                     </div>
 
                     <div class="sk-actions">
+
                         <button type="button" class="sk-btn primary" onclick="showCreateModal()">
                             <i class="fas fa-plus-circle"></i>
-                            Tạo khóa / chứng thư mới
+                            <c:choose>
+                                <c:when test="${hasCertificate}">
+                                    Cấp lại chứng thư và private key
+                                </c:when>
+                                <c:otherwise>
+                                    Tạo chứng thư và private key
+                                </c:otherwise>
+                            </c:choose>
                         </button>
 
-                        <button type="button" class="sk-btn danger" onclick="showRevokeModal()">
-                            <i class="fas fa-triangle-exclamation"></i>
-                            Báo mất private key
-                        </button>
+                        <c:if test="${hasCertificate}">
+                            <button type="button" class="sk-btn danger" onclick="showRevokeModal()">
+                                <i class="fas fa-triangle-exclamation"></i>
+                                Tôi đã mất private key
+                            </button>
+                        </c:if>
 
                         <button type="button"
                                 class="sk-btn"
@@ -180,17 +210,7 @@
                             <i class="fas fa-toolbox"></i>
                             Tải tool ký
                         </button>
-
-                        <c:if test="${canDownloadPrivateKey}">
-                            <a class="sk-btn"
-                               href="${pageContext.request.contextPath}/security-key/download-private-key"
-                               onclick="return confirmDownloadPrivateKey(event)">
-                                <i class="fas fa-key"></i>
-                                Tải private key
-                            </a>
-                        </c:if>
                     </div>
-                </div>
 
                 <div class="sk-history">
                     <h4><i class="fas fa-clock-rotate-left"></i> Lịch sử chứng thư</h4>
@@ -243,21 +263,28 @@
 
 <jsp:include page="footer.jsp"/>
 
-<form id="createKeyForm" method="post" action="${pageContext.request.contextPath}/security-key/create" style="display:none"></form>
-<form id="revokeKeyForm" method="post" action="${pageContext.request.contextPath}/security-key/revoke" style="display:none"></form>
+<form id="createKeyForm" method="post" action="${pageContext.request.contextPath}/security-key/create"
+      style="display:none"></form>
+<form id="revokeKeyForm" method="post" action="${pageContext.request.contextPath}/security-key/revoke"
+      style="display:none"></form>
 
 <script>
     function showCreateModal() {
         Swal.fire({
-            title: 'Tạo khóa / chứng thư mới?',
-            html: 'Hệ thống sẽ tạo cặp khóa RSA 2048-bit mới.<br>' +
-                'Private key chỉ được tải <strong>một lần</strong> ngay sau khi tạo.<br>' +
-                'Chứng thư cũ nếu có sẽ bị thu hồi.',
+            title: 'Cấp lại chứng thư và private key?',
+            html:
+                '<div style="text-align:left; line-height:1.6">' +
+                '<p>Hệ thống sẽ tạo <strong>cặp khóa RSA mới</strong> và <strong>chứng thư mới</strong> cho bạn.</p>' +
+                '<p>Private key mới sẽ đi kèm với chứng thư mới. Private key cũ sẽ không dùng được với chứng thư mới.</p>' +
+                '<p>Nếu bạn đang có chứng thư cũ, chứng thư đó sẽ bị thu hồi.</p>' +
+                '<p><strong>Lưu ý:</strong> private key mới chỉ được tải một lần sau khi tạo.</p>' +
+                '</div>',
             icon: 'question',
             showCancelButton: true,
-            confirmButtonText: 'Xác nhận tạo',
+            confirmButtonText: 'Xác nhận cấp mới',
             cancelButtonText: 'Hủy',
-            confirmButtonColor: '#6366f1'
+            confirmButtonColor: '#6366f1',
+            cancelButtonColor: '#64748b'
         }).then((result) => {
             if (result.isConfirmed) {
                 document.getElementById('createKeyForm').submit();
@@ -267,13 +294,19 @@
 
     function showRevokeModal() {
         Swal.fire({
-            title: 'Báo mất private key?',
-            text: 'Chứng thư hiện tại sẽ bị thu hồi. Hệ thống sẽ cấp lại khóa và chứng thư mới cho bạn.',
+            title: 'Bạn đã mất private key?',
+            html:
+                '<div style="text-align:left; line-height:1.6">' +
+                '<p>Khi mất private key, bạn không thể ký đơn hàng bằng chứng thư hiện tại nữa.</p>' +
+                '<p>Hệ thống sẽ thu hồi chứng thư cũ, sau đó cấp <strong>chứng thư mới</strong> và <strong>private key mới</strong>.</p>' +
+                '<p>Sau khi cấp lại, bạn bắt buộc phải tải private key mới để ký đơn hàng về sau.</p>' +
+                '</div>',
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonText: 'Xác nhận thu hồi',
+            confirmButtonText: 'Thu hồi và cấp lại',
             cancelButtonText: 'Hủy',
-            confirmButtonColor: '#ef4444'
+            confirmButtonColor: '#ef4444',
+            cancelButtonColor: '#64748b'
         }).then((result) => {
             if (result.isConfirmed) {
                 document.getElementById('revokeKeyForm').submit();
@@ -287,19 +320,98 @@
         const downloadUrl = event.currentTarget.href;
 
         Swal.fire({
-            title: 'Tải private key?',
-            html: 'Private key chỉ được tải <strong>một lần duy nhất</strong>.<br>' +
-                'Sau khi tải xong, hệ thống sẽ xóa file này khỏi server.<br><br>' +
-                '<strong>Hãy lưu file ở nơi an toàn.</strong>',
+            title: 'Tải private key mới?',
+            html:
+                '<div style="text-align:left; line-height:1.6">' +
+                '<p>Private key này chỉ được tải <strong>một lần duy nhất</strong>.</p>' +
+                '<p>Sau khi tải thành công, hệ thống sẽ xóa file private key khỏi server.</p>' +
+                '<p>Hãy lưu file ở nơi an toàn. Nếu mất file này, bạn phải cấp lại chứng thư mới.</p>' +
+                '</div>',
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Tải ngay',
             cancelButtonText: 'Hủy',
             confirmButtonColor: '#6366f1',
             cancelButtonColor: '#64748b'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                window.location.href = downloadUrl;
+        }).then(async (result) => {
+            if (!result.isConfirmed) {
+                return;
+            }
+
+            try {
+                Swal.fire({
+                    title: 'Đang tải private key...',
+                    text: 'Vui lòng chờ trong giây lát.',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                const response = await fetch(downloadUrl, {
+                    method: 'GET',
+                    credentials: 'same-origin'
+                });
+
+                if (response.redirected) {
+                    window.location.href = response.url;
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error('Không thể tải private key.');
+                }
+
+                const blob = await response.blob();
+
+                let fileName = 'private.key';
+                const contentDisposition = response.headers.get('Content-Disposition');
+
+                if (contentDisposition) {
+                    const match = contentDisposition.match(/filename="?([^"]+)"?/);
+                    if (match && match[1]) {
+                        fileName = match[1];
+                    }
+                }
+
+                const blobUrl = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+
+                link.href = blobUrl;
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(blobUrl);
+
+                await Swal.fire({
+                    title: 'Đã tải private key',
+                    text: 'Trang sẽ được làm mới để cập nhật trạng thái.',
+                    icon: 'success',
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#6366f1',
+                    timer: 1500,
+                    timerProgressBar: true
+                });
+                // After 1.5 seconds reload
+                setTimeout(() => {
+                    window.location.replace('${pageContext.request.contextPath}/security-key');
+                }, 3000);
+
+            } catch (error) {
+                Swal.fire({
+                    title: 'Tải private key thất bại',
+                    text: error.message || 'Private key không tồn tại hoặc đã được tải trước đó.',
+                    icon: 'error',
+                    confirmButtonText: 'Đóng',
+                    confirmButtonColor: '#ef4444'
+                }).then(() => {
+                    setTimeout(() => {
+                        window.location.replace('${pageContext.request.contextPath}/security-key?downloadError=1');
+                    }, 3000);
+                });
             }
         });
 

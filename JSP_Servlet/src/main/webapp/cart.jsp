@@ -631,15 +631,15 @@
                 const btnUploadSignature = document.getElementById("btnUploadSignature");
                 const btnReissuePrivateKey = document.getElementById("btnReissuePrivateKey");
 
-                    const btnDownloadHash = document.getElementById("btnDownloadHash");
+                const btnDownloadHash = document.getElementById("btnDownloadHash");
 
-                    if (btnDownloadHash) {
-                        btnDownloadHash.addEventListener("click", function () {
-                            const oid = this.getAttribute("data-order-id");
-                            const hash = this.getAttribute("data-order-hash") || "";
-                            downloadOrderHash(oid, hash);
-                        });
-                    }
+                if (btnDownloadHash) {
+                    btnDownloadHash.addEventListener("click", function () {
+                        const oid = this.getAttribute("data-order-id");
+                        const hash = this.getAttribute("data-order-hash") || "";
+                        downloadOrderHash(oid, hash);
+                    });
+                }
 
                 if (btnUploadSignature) {
                     btnUploadSignature.addEventListener("click", function () {
@@ -767,7 +767,7 @@
 
                     Swal.fire({
                         icon: "success",
-                        title: "Đơn hàng đã giao thành công",
+                        title: "Đơn hàng đã hoàn tất",
                         text: "Admin đã xác nhận hoàn tất đơn hàng.",
                         confirmButtonText: "Xem đơn hàng",
                         allowOutsideClick: false,
@@ -801,6 +801,21 @@
                         icon: "warning",
                         title: "Đơn hàng đã bị hủy",
                         text: "Đơn hàng không thể tiếp tục xử lý.",
+                        confirmButtonText: "Xem đơn hàng",
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        showCloseButton: false
+                    }).then(function () {
+                        window.location.href = CONTEXT_PATH + "/bought-product";
+                    });
+                }
+                if (status === "VERIFIED") {
+                    clearInterval(timer);
+
+                    Swal.fire({
+                        icon: "success",
+                        title: "Ký điện tử thành công",
+                        text: "Chữ ký đã được xác minh. Đơn hàng đang chờ admin xử lý.",
                         confirmButtonText: "Xem đơn hàng",
                         allowOutsideClick: false,
                         allowEscapeKey: false,

@@ -1,10 +1,6 @@
 package vn.edu.nlu.fit.be.controller;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-
 import com.google.gson.Gson;
-
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.annotation.WebServlet;
@@ -14,9 +10,14 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import vn.edu.nlu.fit.be.dto.OrderToSignRes;
 import vn.edu.nlu.fit.be.model.Account;
+import vn.edu.nlu.fit.be.model.Order;
+import vn.edu.nlu.fit.be.model.OrderStatus;
 import vn.edu.nlu.fit.be.service.CertificateService;
 import vn.edu.nlu.fit.be.service.OrderSigningService;
 import vn.edu.nlu.fit.be.service.OrdersService;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 @WebServlet(name = "OrderSignController", urlPatterns = {
         "/order-sign",
@@ -60,8 +61,13 @@ public class OrderSignController extends HttpServlet {
         Integer orderId = parseOrderIdOrNull(request);
 
         if (orderId != null) {
+            Order order = ordersService.getById(orderId);
             if (!ordersService.isOwner(orderId, account.getAccountId())) {
                 response.sendRedirect(request.getContextPath() + "/error/403.jsp");
+                return;
+            }
+            if (order.getStatusOrder() != OrderStatus.WAITING_SIGNATURE) {
+                response.sendRedirect(request.getContextPath() + "/bought-product");
                 return;
             }
 
@@ -78,13 +84,15 @@ public class OrderSignController extends HttpServlet {
                                          HttpServletResponse response,
                                          Account account) throws IOException {
         Integer orderId = parseOrderIdOrNull(request);
+
         if (orderId == null) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Missing orderId");
             return;
         }
+        Order order = ordersService.getById(orderId);
 
-        if (!ordersService.isOwner(orderId, account.getAccountId())) {
-            response.sendRedirect(request.getContextPath() + "/error/403.jsp");
+        if (order.getStatusOrder() != OrderStatus.WAITING_SIGNATURE) {
+            response.sendRedirect(request.getContextPath() + "/bought-product");
             return;
         }
 

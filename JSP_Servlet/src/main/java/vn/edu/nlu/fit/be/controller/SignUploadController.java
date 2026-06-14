@@ -1,25 +1,20 @@
 package vn.edu.nlu.fit.be.controller;
 
+import com.google.gson.Gson;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.*;
+import vn.edu.nlu.fit.be.dto.SignVerifyResult;
+import vn.edu.nlu.fit.be.dto.SignedOrderReq;
+import vn.edu.nlu.fit.be.model.Account;
+import vn.edu.nlu.fit.be.service.SignVerifyService;
+
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
-
-import com.google.gson.Gson;
-
-import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.MultipartConfig;
-import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
-import jakarta.servlet.http.Part;
-import vn.edu.nlu.fit.be.dto.SignVerifyResult;
-import vn.edu.nlu.fit.be.dto.SignedOrderReq;
-import vn.edu.nlu.fit.be.model.Account;
-import vn.edu.nlu.fit.be.service.SignVerifyService;
 
 @WebServlet(name = "SignUploadController", value = "/upload-signature")
 @MultipartConfig(
@@ -67,6 +62,7 @@ public class SignUploadController extends HttpServlet {
             SignedOrderReq signedOrder = readSignedOrder(request);
             SignVerifyResult result = verifyService.verifySignedOrder(signedOrder, account.getAccountId());
 
+
             if (ajax) {
                 Map<String, Object> data = new HashMap<>();
                 data.put("verified", result.isSuccess());
@@ -78,6 +74,9 @@ public class SignUploadController extends HttpServlet {
                                 : "Chữ ký không hợp lệ hoặc dữ liệu đơn hàng đã bị thay đổi.",
                         data
                 );
+                if (result.isSuccess()) {
+                    clearSigningSession(request.getSession(false));
+                }
                 return;
             }
 
@@ -140,5 +139,18 @@ public class SignUploadController extends HttpServlet {
 
         return (submittedFileName != null && submittedFileName.toLowerCase().endsWith(".json"))
                 || "application/json".equalsIgnoreCase(contentType);
+    }
+
+    private void clearSigningSession(HttpSession session) {
+        if (session == null) {
+            return;
+        }
+
+        session.removeAttribute("showSignPopup");
+        session.removeAttribute("signOrderId");
+        session.removeAttribute("signOrderHash");
+        session.removeAttribute("signingUrl");
+        session.removeAttribute("signToolUrl");
+        session.removeAttribute("privateKeyUrl");
     }
 }
