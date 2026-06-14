@@ -10,6 +10,7 @@ import vn.edu.nlu.fit.be.model.AccountStatus;
 import vn.edu.nlu.fit.be.service.AccountService;
 
 import java.io.IOException;
+import java.security.cert.Certificate;
 import java.util.List;
 
 @WebServlet(urlPatterns = {
@@ -34,12 +35,11 @@ public class AccountController extends HttpServlet {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
-
         Account admin = (Account) session.getAttribute("USER");
 
         // không phải admin
         if (admin.getRole() <= 0) {
-            resp.sendRedirect(req.getContextPath() + "/403.jsp");
+            resp.sendRedirect(req.getContextPath() + "/error/403.jsp");
             return;
         }
 
@@ -84,7 +84,7 @@ public class AccountController extends HttpServlet {
         Account admin = (Account) session.getAttribute("USER");
 
         if (admin.getRole() <= 0) {
-            resp.sendRedirect(req.getContextPath() + "/403.jsp");
+            resp.sendRedirect(req.getContextPath() + "/error/403.jsp");
             return;
         }
 

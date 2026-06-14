@@ -29,7 +29,7 @@ public class OrdersDao extends BaseDao {
             int orderId = handle.createUpdate(insertOrderSql)
                     .bind("accountId", o.getAccountId())
                     .bind("voucherId", o.getVoucherId() == 0 ? null : o.getVoucherId())
-                    .bind("status", o.getStatusOrder().name())
+                    .bind("status", o.getStatusOrder().getDbValue())
                     .bind("totalAmount", o.getTotalAmount())
                     .bind("deliveryAddress", o.getDeliveryAddress())
                     .bind("paymentMethod", o.getPaymentMethod().name())
@@ -84,9 +84,7 @@ public class OrdersDao extends BaseDao {
                             o.setPaymentMethod(
                                     pm == null ? PaymentMethod.COD : PaymentMethod.valueOf(pm.trim())
                             );
-                            o.setStatusOrder(
-                                    OrderStatus.valueOf(rs.getString("statusOrder"))
-                            );
+                            o.setStatusOrder(OrderStatus.fromDbValue(rs.getString("statusOrder")));
                             o.setUsername(rs.getString("username"));
                             return o;
                         })
@@ -124,7 +122,7 @@ public class OrdersDao extends BaseDao {
                             o.setDeliveryAddress(rs.getString("deliveryAddress"));
                             String pm = rs.getString("paymentMethod");
                             o.setPaymentMethod(pm == null ? PaymentMethod.COD : PaymentMethod.valueOf(pm.trim()));
-                            o.setStatusOrder(OrderStatus.valueOf(rs.getString("statusOrder")));
+                            o.setStatusOrder(OrderStatus.fromDbValue(rs.getString("statusOrder")));
                             o.setUsername(rs.getString("username"));
                             return o;
                         })
@@ -140,7 +138,7 @@ public class OrdersDao extends BaseDao {
 
         return jdbi.withHandle(handle ->
                 handle.createUpdate(sql)
-                        .bind("st", status.name())
+                        .bind("st", status.getDbValue())
                         .bind("id", orderId)
                         .execute()
         ) > 0;
@@ -170,7 +168,7 @@ public class OrdersDao extends BaseDao {
                 handle.createUpdate(sql)
                         .bind("deliveryAddress", order.getDeliveryAddress())
                         .bind("paymentMethod", order.getPaymentMethod().name())
-                        .bind("status", order.getStatusOrder().name())
+                        .bind("status", order.getStatusOrder().getDbValue())
                         .bind("orderId", order.getOrderId())
                         .execute()
         ) > 0;
@@ -198,19 +196,19 @@ public class OrdersDao extends BaseDao {
 
     public Map<Integer, List<OrderDetail>> getPurchasedProductsByAccount(int accountId) {
         String sql = """
-            SELECT
-                o.order_id,
-                p.product_id,
-                p.product_name,
-                p.product_price,
-                p.product_image,
-                od.quantity
-            FROM orders o
-            JOIN order_details od ON o.order_id = od.order_id
-            JOIN products p ON p.product_id = od.product_id
-            WHERE o.account_id = :accountId
-            ORDER BY o.order_id DESC
-        """;
+                    SELECT
+                        o.order_id,
+                        p.product_id,
+                        p.product_name,
+                        p.product_price,
+                        p.product_image,
+                        od.quantity
+                    FROM orders o
+                    JOIN order_details od ON o.order_id = od.order_id
+                    JOIN products p ON p.product_id = od.product_id
+                    WHERE o.account_id = :accountId
+                    ORDER BY o.order_id DESC
+                """;
 
         return jdbi.withHandle(handle ->
                 handle.createQuery(sql)
@@ -233,6 +231,53 @@ public class OrdersDao extends BaseDao {
                         .list()
                         .stream()
                         .collect(Collectors.groupingBy(OrderDetail::getOrderId))
+        );
+    }
+
+    public List<OrderDetail> getOrderDetailsByOrderId(int orderId) {
+        String sql = """
+            SELECT
+                od.order_id,
+                od.product_id,
+                od.unit_price,
+                od.quantity
+            FROM order_details od
+            WHERE od.order_id = :orderId
+        """;
+        return jdbi.withHandle(handle ->
+                handle.createQuery(sql)
+                        .bind("orderId", orderId)
+                        .map((rs, ctx) -> {
+                            OrderDetail d = new OrderDetail();
+                            d.setOrderId(rs.getInt("order_id"));
+                            d.setProductId(rs.getInt("product_id"));
+                            d.setUnitPrice(rs.getInt("unit_price"));
+                            d.setQuantity(rs.getInt("quantity"));
+                            return d;
+                        })
+                        .list()
+        );
+    }
+    public Map<Integer, OrderStatus> getOrderStatusesByAccount(int accountId) {
+        String sql = """
+        SELECT order_id, status
+        FROM orders
+        WHERE account_id = :accountId
+    """;
+
+        return jdbi.withHandle(handle ->
+                handle.createQuery(sql)
+                        .bind("accountId", accountId)
+                        .map((rs, ctx) -> Map.entry(
+                                rs.getInt("order_id"),
+                                OrderStatus.fromDbValue(rs.getString("status"))
+                        ))
+                        .list()
+                        .stream()
+                        .collect(Collectors.toMap(
+                                Map.Entry::getKey,
+                                Map.Entry::getValue
+                        ))
         );
     }
 }

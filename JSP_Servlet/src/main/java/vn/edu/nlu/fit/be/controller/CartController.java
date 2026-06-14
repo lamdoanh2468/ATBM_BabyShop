@@ -3,8 +3,10 @@ package vn.edu.nlu.fit.be.controller;
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
 import jakarta.servlet.annotation.*;
+import vn.edu.nlu.fit.be.dao.OrderSignDao;
 import vn.edu.nlu.fit.be.model.Account;
 import vn.edu.nlu.fit.be.model.Cart;
+import vn.edu.nlu.fit.be.model.OrderSign;
 import vn.edu.nlu.fit.be.model.Product;
 import vn.edu.nlu.fit.be.model.Voucher;
 import vn.edu.nlu.fit.be.service.ProductService;
@@ -32,16 +34,18 @@ public class CartController extends HttpServlet {
             safeRedirect(response, request.getContextPath() + "/login?returnUrl=" + encodedUrl);
             return;
         }
+
+        String action = request.getParameter("action");
+        String productIdParam = request.getParameter("product_id");
+        String quantityParam = request.getParameter("quantity");
+
         Cart cart = (Cart) session.getAttribute("cart");
-        //Kiểm tra giỏ hàng tồn tại chưa
+        // Kiểm tra giỏ hàng tồn tại chưa
         if (cart == null) {
             cart = new Cart();
             session.setAttribute("cart", cart);
         }
 
-        String action = request.getParameter("action");
-        String productIdParam = request.getParameter("product_id");
-        String quantityParam = request.getParameter("quantity");
         if (productIdParam != null) {
             int productId = Integer.parseInt(productIdParam);
             int quantity = (quantityParam != null && !quantityParam.isEmpty()) ? Integer.parseInt(quantityParam) : 1;
@@ -70,7 +74,7 @@ public class CartController extends HttpServlet {
                     safeRedirect(response, request.getContextPath() + "/cart");
                     return;
                 case "buy_now":
-                    cart.addItem(product,quantity);
+                    cart.addItem(product, quantity);
                     session.setAttribute("cart", cart);
                     safeRedirect(response, request.getContextPath() + "/cart");
                     return;
@@ -84,7 +88,13 @@ public class CartController extends HttpServlet {
             return;
         }
 
-        //XEM GIỎ HÀNG
+        OrderSign pendingOrderSign = new OrderSignDao().findLatestWaitingByAccountId(account.getAccountId());
+        if (pendingOrderSign != null) {
+            safeRedirect(response, request.getContextPath() + "/order-sign?orderId=" + pendingOrderSign.getOrderId());
+            return;
+        }
+
+        // Xem giỏ hàng
         request.getRequestDispatcher("cart.jsp").forward(request, response);
     }
 

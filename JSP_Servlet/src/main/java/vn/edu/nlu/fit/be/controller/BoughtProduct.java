@@ -5,6 +5,7 @@ import jakarta.servlet.http.*;
 import jakarta.servlet.annotation.*;
 import vn.edu.nlu.fit.be.model.Account;
 import vn.edu.nlu.fit.be.model.OrderDetail;
+import vn.edu.nlu.fit.be.model.OrderStatus;
 import vn.edu.nlu.fit.be.service.OrdersService;
 
 import java.io.IOException;
@@ -29,8 +30,11 @@ public class BoughtProduct extends HttpServlet {
         // 2) Lấy discount theo từng orderId (tái sử dụng getDiscountAmountFromVoucher)
         Map<Integer, Integer> discounts =
                 ods.getDiscountAmountOrders(boughts.keySet());
+        Map<Integer, OrderStatus> orderStatuses =
+                ods.getOrderStatusesByAccount(acc.getAccountId());
 
         request.setAttribute("BOUGHTS", boughts);
+        request.setAttribute("ORDER_STATUSES", orderStatuses);
         request.setAttribute("DISCOUNTS", discounts);
         request.getRequestDispatcher("/bought_product.jsp").forward(request, response);
 

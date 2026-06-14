@@ -7,6 +7,7 @@ public class OrderSign {
     private long orderSignId;
     private long orderId;
     private long accountId;
+    private int certificateId;
     private String snapshotJson;
     private String orderHash;
     private String hashAlgorithm;
@@ -40,6 +41,12 @@ public class OrderSign {
         this.accountId = accountId;
     }
 
+    public int getCertificateId() {
+        return certificateId;
+    }
+    public void setCertificateId(int certificateId) {
+        this.certificateId = certificateId;
+    }
     public String getSnapshotJson() {
         return snapshotJson;
     }
