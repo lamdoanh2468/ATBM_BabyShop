@@ -558,42 +558,12 @@
         const orderHash = orderData.orderHash || "";
         const signingUrl = orderData.signingUrl || "#";
         const signToolUrl = orderData.signToolUrl || (CONTEXT_PATH + "/signing-tool/download");
-        const privateKeyUrl = normalizeAppUrl(orderData.privateKeyUrl || "");
-
-        let privateKeyHtml = "";
-
-        if (privateKeyUrl) {
-            privateKeyHtml =
-                '<a class="sign-step-card warning" href="' + escapeAttr(privateKeyUrl) + '">' +
-                '   <strong>3. Tải private key</strong>' +
-                '   <span>Private key chỉ nên tải một lần. Hãy lưu ở nơi an toàn.</span>' +
-                '</a>';
-        } else {
-            privateKeyHtml =
-                '<div class="sign-step-card">' +
-                '   <strong>3. Dùng private key đã lưu</strong>' +
-                '   <span>Nếu bạn vẫn còn private key, hãy dùng file đó để ký đơn hàng.</span>' +
-                '   <button type="button" id="btnReissuePrivateKey" class="sign-lost-key-link">' +
-                '       Tôi mất private key - cấp lại key mới' +
-                '   </button>' +
-                '</div>';
-        }
-
         const html =
             '<div class="sign-popup-content">' +
             '   <p class="sign-popup-desc">' +
             '       Đơn hàng đã được tạo ở trạng thái <strong>CHỜ KÝ</strong>. ' +
             '       Vui lòng tải dữ liệu đơn hàng, ký bằng private key, rồi upload file chữ ký để xác minh.' +
             '   </p>' +
-
-            '   <div class="sign-popup-hash">' +
-            '       <span>Order Hash SHA-256</span>' +
-            '       <code id="orderHashCode">' + escapeHtml(orderHash) + '</code>' +
-            '       <div style="margin-top:0.5rem;">' +
-            '           <button type="button" id="btnDownloadHash" class="sign-download-hash-btn" data-order-id="' + escapeAttr(String(orderId)) + '" data-order-hash="' + escapeAttr(orderHash) + '">Tải hash</button>' +
-            '       </div>' +
-            '   </div>' +
-
             '   <div class="sign-popup-steps">' +
             '       <a class="sign-step-card primary" href="' + escapeAttr(signingUrl) + '">' +
             '           <strong>1. Tải dữ liệu đơn hàng</strong>' +
@@ -604,11 +574,8 @@
             '           <strong>2. Tải tool ký</strong>' +
             '           <span>Dùng tool để ký order hash bằng private key.</span>' +
             '       </a>' +
-
-            privateKeyHtml +
-
             '       <div class="sign-upload-box">' +
-            '           <label for="signedOrderFile">4. Upload file chữ ký</label>' +
+            '           <label for="signedOrderFile">3. Upload file chữ ký</label>' +
             '           <input id="signedOrderFile" type="file" accept=".json,application/json">' +
             '           <button type="button" id="btnUploadSignature" class="swal2-confirm swal2-styled">' +
             '               Upload chữ ký' +
