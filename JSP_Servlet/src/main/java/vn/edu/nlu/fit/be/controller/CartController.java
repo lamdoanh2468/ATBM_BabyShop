@@ -3,10 +3,8 @@ package vn.edu.nlu.fit.be.controller;
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
 import jakarta.servlet.annotation.*;
-import vn.edu.nlu.fit.be.dao.OrderSignDao;
 import vn.edu.nlu.fit.be.model.Account;
 import vn.edu.nlu.fit.be.model.Cart;
-import vn.edu.nlu.fit.be.model.OrderSign;
 import vn.edu.nlu.fit.be.model.Product;
 import vn.edu.nlu.fit.be.model.Voucher;
 import vn.edu.nlu.fit.be.service.ProductService;
@@ -16,6 +14,7 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.sql.Date;
+import java.time.LocalDate;
 
 @WebServlet(name = "CartController", value = "/cart")
 public class CartController extends HttpServlet {
@@ -88,12 +87,6 @@ public class CartController extends HttpServlet {
             return;
         }
 
-        OrderSign pendingOrderSign = new OrderSignDao().findLatestWaitingByAccountId(account.getAccountId());
-        if (pendingOrderSign != null) {
-            safeRedirect(response, request.getContextPath() + "/order-sign?orderId=" + pendingOrderSign.getOrderId());
-            return;
-        }
-
         // Xem giỏ hàng
         request.getRequestDispatcher("cart.jsp").forward(request, response);
     }
@@ -137,7 +130,7 @@ public class CartController extends HttpServlet {
             }
 
             // Check voucher validity (date range)
-            Date today = new Date(System.currentTimeMillis());
+            Date today = Date.valueOf(LocalDate.now());
             if (voucher.getStartDate() != null && today.before(voucher.getStartDate())) {
                 session.setAttribute("voucherError", "Mã voucher chưa có hiệu lực!");
                 session.removeAttribute("appliedVoucher");
