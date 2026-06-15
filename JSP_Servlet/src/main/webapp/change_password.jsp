@@ -59,8 +59,8 @@
                 <li class="active">
                     <i class="fas fa-key"></i> Đổi mật khẩu
                 </li>
-                <li onclick="location.href='${pageContext.request.contextPath}/security-key/download-private-key'">
-                    <i class="fas fa-shield-halved"></i> Chữ ký điện tử
+                <li onclick="location.href='${pageContext.request.contextPath}/security-key'">
+                    <i class="fas fa-shield-halved"></i> Chữ ký điện tử và chứng thư số
                 </li>
             </ul>
         </aside>
