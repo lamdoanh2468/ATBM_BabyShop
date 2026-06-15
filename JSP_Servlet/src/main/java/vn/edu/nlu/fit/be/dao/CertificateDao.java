@@ -138,6 +138,7 @@ public class CertificateDao extends BaseDao {
                 UPDATE certificates
                 SET status = 'LOST_KEY',
                     lost_at = NOW(),
+                    revoke_at = NOW(),
                     revoke_reason = :reason
                 WHERE certificate_id = :certificateId
                   AND status = 'ACTIVE'

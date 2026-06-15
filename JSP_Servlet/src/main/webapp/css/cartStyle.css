@@ -1460,6 +1460,12 @@ iframe {
 .sign-lost-key-link:hover {
     text-decoration: underline;
 }
+.sign-step-card.as-button {
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+}
 
 @media (min-width: 700px) {
     .sign-popup-steps {

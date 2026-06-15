@@ -6,7 +6,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Khóa bảo mật & Chứng thư số</title>
+    <title>Khóa bảo mật và Chứng thư số điện tử</title>
     <link rel="icon" type="image/x-icon" href="${pageContext.request.contextPath}/favicon.ico">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23,7 +23,7 @@
     <nav class="pf-breadcrumb">
         <a href="${pageContext.request.contextPath}/">Trang chủ</a>
         <span class="dot">•</span>
-        <span>Chữ ký điện tử</span>
+        <span>Chữ ký điện tử và chứng thư số</span>
     </nav>
 
     <div class="pf-container">
@@ -43,14 +43,14 @@
                     <i class="fas fa-key"></i> Đổi mật khẩu
                 </li>
                 <li onclick="location.href='${pageContext.request.contextPath}/security-key'">
-                    <i class="fas fa-shield-halved"></i> Chữ ký điện tử
+                    <i class="fas fa-shield-halved"></i> Chữ ký điện tử và chứng thư số
                 </li>
             </ul>
         </aside>
 
         <main class="pf-content">
             <section class="pf-section pf-section-active">
-                <h3><i class="fas fa-shield-halved"></i> Quản lý khóa và chứng thư số</h3>
+                <h3><i class="fas fa-shield-halved"></i> Quản lý chữ ký điện tử và chứng thư số</h3>
 
                 <c:if test="${not empty error}">
                     <div class="sk-message error">
@@ -256,7 +256,7 @@
                         </table>
                     </div>
                 </div>
-            </section>
+            </div>
         </main>
     </div>
 </div>
