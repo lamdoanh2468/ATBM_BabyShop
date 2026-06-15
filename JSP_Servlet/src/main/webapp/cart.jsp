@@ -585,15 +585,6 @@
             '       Đơn hàng đã được tạo ở trạng thái <strong>CHỜ KÝ</strong>. ' +
             '       Vui lòng tải dữ liệu đơn hàng, ký bằng private key, rồi upload file chữ ký để xác minh.' +
             '   </p>' +
-
-            '   <div class="sign-popup-hash">' +
-            '       <span>Order Hash SHA-256</span>' +
-            '       <code id="orderHashCode">' + escapeHtml(orderHash) + '</code>' +
-            '       <div style="margin-top:0.5rem;">' +
-            '           <button type="button" id="btnDownloadHash" class="sign-download-hash-btn" data-order-id="' + escapeAttr(String(orderId)) + '" data-order-hash="' + escapeAttr(orderHash) + '">Tải hash</button>' +
-            '       </div>' +
-            '   </div>' +
-
             '   <div class="sign-popup-steps">' +
             '       <a class="sign-step-card primary" href="' + escapeAttr(signingUrl) + '">' +
             '           <strong>1. Tải dữ liệu đơn hàng</strong>' +
