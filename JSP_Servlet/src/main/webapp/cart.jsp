@@ -558,27 +558,6 @@
         const orderHash = orderData.orderHash || "";
         const signingUrl = orderData.signingUrl || "#";
         const signToolUrl = orderData.signToolUrl || (CONTEXT_PATH + "/signing-tool/download");
-        const privateKeyUrl = normalizeAppUrl(orderData.privateKeyUrl || "");
-
-        let privateKeyHtml = "";
-
-        if (privateKeyUrl) {
-            privateKeyHtml =
-                '<a class="sign-step-card warning" href="' + escapeAttr(privateKeyUrl) + '">' +
-                '   <strong>3. Tải private key</strong>' +
-                '   <span>Private key chỉ nên tải một lần. Hãy lưu ở nơi an toàn.</span>' +
-                '</a>';
-        } else {
-            privateKeyHtml =
-                '<div class="sign-step-card">' +
-                '   <strong>3. Dùng private key đã lưu</strong>' +
-                '   <span>Nếu bạn vẫn còn private key, hãy dùng file đó để ký đơn hàng.</span>' +
-                '   <button type="button" id="btnReissuePrivateKey" class="sign-lost-key-link">' +
-                '       Tôi mất private key - cấp lại key mới' +
-                '   </button>' +
-                '</div>';
-        }
-
         const html =
             '<div class="sign-popup-content">' +
             '   <p class="sign-popup-desc">' +
@@ -595,11 +574,8 @@
             '           <strong>2. Tải tool ký</strong>' +
             '           <span>Dùng tool để ký order hash bằng private key.</span>' +
             '       </a>' +
-
-            privateKeyHtml +
-
             '       <div class="sign-upload-box">' +
-            '           <label for="signedOrderFile">4. Upload file chữ ký</label>' +
+            '           <label for="signedOrderFile">3. Upload file chữ ký</label>' +
             '           <input id="signedOrderFile" type="file" accept=".json,application/json">' +
             '           <button type="button" id="btnUploadSignature" class="swal2-confirm swal2-styled">' +
             '               Upload chữ ký' +
