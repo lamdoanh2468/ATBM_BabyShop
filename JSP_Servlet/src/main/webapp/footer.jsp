@@ -50,7 +50,7 @@
 
                         <h4>Phương thức thanh toán</h4>
                         <div class="payment-icons">
-                            <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/Visa_Logo.png" alt="Visa">
+                            <img src="./img/visa.png" alt="Visa">
                             <img src="https://upload.wikimedia.org/wikipedia/commons/0/04/Mastercard-logo.png"
                                 alt="MasterCard">
                             <img src="https://m.momoshop.com.tw/img/momologo.svg" alt="Momo">

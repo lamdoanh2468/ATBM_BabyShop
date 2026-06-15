@@ -1,134 +1,254 @@
 package vn.edu.nlu.fit.be.controller;
 
-import jakarta.servlet.*;
-import jakarta.servlet.http.*;
-import jakarta.servlet.annotation.*;
-import vn.edu.nlu.fit.be.model.*;
-import vn.edu.nlu.fit.be.model.CartItem.CartItem;
-import vn.edu.nlu.fit.be.service.*;
-
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
+import com.google.gson.Gson;
+
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import vn.edu.nlu.fit.be.dto.CheckoutSignResult;
+import vn.edu.nlu.fit.be.model.Account;
+import vn.edu.nlu.fit.be.model.Cart;
+import vn.edu.nlu.fit.be.model.PaymentMethod;
+import vn.edu.nlu.fit.be.model.Voucher;
+import vn.edu.nlu.fit.be.service.CheckoutSigningService;
+import vn.edu.nlu.fit.be.service.VoucherService;
 
 @WebServlet(name = "OrderController", value = "/order")
 public class OrderController extends HttpServlet {
-    @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
+    private final Gson gson = new Gson();
+    private final VoucherService voucherService = new VoucherService();
+    private final CheckoutSigningService checkoutSigningService = new CheckoutSigningService();
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        response.sendRedirect(request.getContextPath() + "/cart");
     }
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        HttpSession session = request.getSession();
-        VoucherService voucherService = new VoucherService();
-        OrdersService ordersService = new OrdersService();
-        StockProductService spService = new StockProductService();
-        Account account = (Account) session.getAttribute("USER");
-        if (account == null) {
-            response.sendRedirect(request.getContextPath() + "/login");
-            return;
-        }
-
-        Cart cart = (Cart) session.getAttribute("cart");
-        if (cart == null || cart.getTotalQuantity() == 0) {
-            response.sendRedirect(request.getContextPath() + "/cart");
-            return;
-        }
-
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
 
-        String deliveryAddress = request.getParameter("deliveryAddress");
-        String paymentMethodStr = request.getParameter("paymentMethod");
-        String voucherCode = request.getParameter("voucherCode");
-        if (voucherCode == null || voucherCode.trim().isEmpty()) {
-            voucherCode = (String) session.getAttribute("voucherCode");
-        }
-        String action = request.getParameter("action");
+        boolean ajax = isAjax(request);
+        HttpSession session = request.getSession(false);
 
-        // Validate địa chỉ giao hàng (chỉ khi không phải action voucher)
-        if (action == null && (deliveryAddress == null || deliveryAddress.trim().isEmpty())) {
-            request.setAttribute("error", "Vui lòng nhập địa chỉ giao hàng");
-            request.getRequestDispatcher("/cart.jsp").forward(request, response);
+        if (session == null || session.getAttribute("USER") == null) {
+            if (ajax) {
+                writeJson(response, false, "Bạn cần đăng nhập trước khi thanh toán", null);
+            } else {
+                response.sendRedirect(request.getContextPath() + "/login");
+            }
             return;
         }
 
+        Account account = (Account) session.getAttribute("USER");
+        Cart cart = (Cart) session.getAttribute("cart");
 
-        PaymentMethod paymentMethod;
-        try {
-            paymentMethod = PaymentMethod.valueOf(paymentMethodStr);
-        } catch (Exception e) {
-            paymentMethod = PaymentMethod.COD;
+        if (cart == null || cart.getTotalQuantity() == 0) {
+            if (ajax) {
+                writeJson(response, false, "Giỏ hàng đang trống", null);
+            } else {
+                response.sendRedirect(request.getContextPath() + "/cart");
+            }
+            return;
         }
 
-        //===== Áp dụng phần voucher =====
-        int totalPrice = cart.getTotalPrice();
-        int discount = 0;
-        Integer discountAmount = (Integer) session.getAttribute("discountAmount");
-        if (discountAmount != null) {
-            discount = discountAmount;
-        }
-        int discountSafe = Math.min(discount, totalPrice);
-        totalPrice = totalPrice - discountSafe;
+        String action = request.getParameter("orderAction");
+        String deliveryAddress = trimToNull(request.getParameter("deliveryAddress"));
+        String voucherCode = resolveVoucherCode(request, session);
+        PaymentMethod paymentMethod = parsePaymentMethod(request.getParameter("paymentMethod"));
+
         if ("applyVoucher".equals(action)) {
-            Voucher v = voucherService.findByCode(voucherCode);
-            if (v == null) {
-                request.setAttribute("voucherError", "Mã voucher không hợp lệ");
-                request.getRequestDispatcher("/cart.jsp").forward(request, response);
+            applyVoucher(request, response, session, deliveryAddress, paymentMethod, voucherCode);
+            return;
+        }
+
+        if ("removeVoucher".equals(action)) {
+            removeVoucher(request, response, session, deliveryAddress, paymentMethod);
+            return;
+        }
+
+        if (deliveryAddress == null) {
+            handleCheckoutError(request, response, ajax, "Vui lòng nhập địa chỉ giao hàng");
+            return;
+        }
+
+        Voucher voucher = voucherCode == null ? null : voucherService.findByCode(voucherCode);
+        Integer voucherId = voucher == null ? null : voucher.getVoucherId();
+        int finalPrice = calculateFinalPrice(cart, session);
+
+        try {
+            CheckoutSignResult result = checkoutSigningService.checkoutAndPrepareSigning(
+                    account,
+                    cart,
+                    deliveryAddress,
+                    paymentMethod,
+                    voucherId,
+                    finalPrice
+            );
+
+            setSigningSession(session, result);
+            clearCartSession(session, cart);
+
+            if (ajax) {
+                writeJson(response, true, "Tạo đơn hàng chờ ký thành công", buildAjaxData(request, result));
                 return;
             }
-            // Lưu vào session
-            session.setAttribute("discountAmount", v.getDiscountAmount());
-            session.setAttribute("voucherCode", voucherCode);
-            session.setAttribute("finalPrice", totalPrice);
-            session.setAttribute("deliveryAddress", deliveryAddress);
-            session.setAttribute("paymentMethod", paymentMethod);
+
+            response.sendRedirect(request.getContextPath() + "/cart?waitingSignature=1");
+        } catch (Exception e) {
+            handleCheckoutError(request, response, ajax, "Không thể tạo đơn hàng cần ký: " + e.getMessage());
+        }
+    }
+
+    private String resolveVoucherCode(HttpServletRequest request, HttpSession session) {
+        String voucherCode = trimToNull(request.getParameter("voucherCode"));
+        if (voucherCode == null) {
+            voucherCode = (String) session.getAttribute("voucherCode");
+        }
+        return voucherCode;
+    }
+
+    private void applyVoucher(HttpServletRequest request,
+                              HttpServletResponse response,
+                              HttpSession session,
+                              String deliveryAddress,
+                              PaymentMethod paymentMethod,
+                              String voucherCode) throws ServletException, IOException {
+        if (voucherCode == null) {
+            request.setAttribute("voucherError", "Vui lòng nhập mã voucher");
             request.getRequestDispatcher("/cart.jsp").forward(request, response);
             return;
         }
-        if ("removeVoucher".equals(action)) {
-            // Lưu vào session
-            session.removeAttribute("discountAmount");
-            session.removeAttribute("voucherCode");
-            session.setAttribute("deliveryAddress", deliveryAddress);
-            session.setAttribute("paymentMethod", paymentMethod);
+
+        Voucher voucher = voucherService.findByCode(voucherCode);
+        if (voucher == null) {
+            request.setAttribute("voucherError", "Mã voucher không hợp lệ");
             request.getRequestDispatcher("/cart.jsp").forward(request, response);
             return;
         }
-        // Xử lý voucher an toàn, tránh NullPointerException
-        Voucher voucher = null;
-        if (voucherCode != null && !voucherCode.trim().isEmpty()) {
-            voucher = voucherService.findByCode(voucherCode);
-        }
 
-        // =====================
-        Integer voucherId = (voucher != null) ? voucher.getVoucherId() : null;
+        session.setAttribute("discountAmount", voucher.getDiscountAmount());
+        session.setAttribute("voucherCode", voucherCode);
+        session.setAttribute("deliveryAddress", deliveryAddress);
+        session.setAttribute("paymentMethod", paymentMethod);
+        request.getRequestDispatcher("/cart.jsp").forward(request, response);
+    }
 
-        // đảm bảo không âm
-        if (spService.checkAvailable(cart)) {
-            int orderId = ordersService.createOrderFromCart(account, cart, deliveryAddress, paymentMethod, voucherId, totalPrice);
-            for (CartItem item : cart.getItems()) {
-                int productId = item.getProduct().getProductId();
-                int quantity = item.getQuantity();
-                spService.updateStockProduct(productId, quantity);
-            }
-            ordersService.updateStatus(orderId,OrderStatus.Pending);
-            // clear cart và session attributes
-            cart.removeAllItems();
-            session.setAttribute("cart", cart);
-            session.removeAttribute("discountAmount");
-            session.removeAttribute("voucherCode");
-            session.removeAttribute("finalPrice");
-            session.removeAttribute("deliveryAddress");
-            session.removeAttribute("paymentMethod");
+    private void removeVoucher(HttpServletRequest request,
+                               HttpServletResponse response,
+                               HttpSession session,
+                               String deliveryAddress,
+                               PaymentMethod paymentMethod) throws ServletException, IOException {
+        session.removeAttribute("discountAmount");
+        session.removeAttribute("voucherCode");
+        session.removeAttribute("finalPrice");
+        session.setAttribute("deliveryAddress", deliveryAddress);
+        session.setAttribute("paymentMethod", paymentMethod);
+        request.getRequestDispatcher("/cart.jsp").forward(request, response);
+    }
 
-            // redirect về cart kèm orderId
-            response.sendRedirect(request.getContextPath() + "/cart?paid=1&orderId=" + orderId);
+    private int calculateFinalPrice(Cart cart, HttpSession session) {
+        int totalPrice = cart.getTotalPrice();
+        Integer discountAmount = (Integer) session.getAttribute("discountAmount");
+        int discount = discountAmount == null ? 0 : Math.min(discountAmount, totalPrice);
+        return totalPrice - discount;
+    }
+
+    private void setSigningSession(HttpSession session, CheckoutSignResult result) {
+        session.setAttribute("showSignPopup", true);
+        session.setAttribute("signOrderId", result.getOrderId());
+        session.setAttribute("signOrderHash", result.getOrderHash());
+        session.setAttribute("signingUrl", result.getSigningUrl());
+        session.setAttribute("signToolUrl", result.getSignToolUrl());
+
+        if (result.hasPrivateKeyUrl()) {
+            session.setAttribute("privateKeyUrl", result.getPrivateKeyUrl());
         } else {
-            // Lấy danh sách sản phẩm không đủ hàng để hiển thị cho user
-            java.util.List<String> outOfStockProducts = spService.getOutOfStockProducts(cart);
-            String errorMessage = "Không đủ số lượng tồn kho cho: " + String.join(", ", outOfStockProducts);
-            session.setAttribute("stockError", errorMessage);
-            response.sendRedirect(request.getContextPath() + "/cart?paid=0");
+            session.removeAttribute("privateKeyUrl");
+        }
+    }
+
+    private Map<String, Object> buildAjaxData(HttpServletRequest request, CheckoutSignResult result) {
+        Map<String, Object> data = new HashMap<>();
+        String contextPath = request.getContextPath();
+
+        data.put("orderId", result.getOrderId());
+        data.put("orderHash", result.getOrderHash());
+        data.put("signingUrl", contextPath + result.getSigningUrl());
+        data.put("signToolUrl", contextPath + result.getSignToolUrl());
+
+        if (result.hasPrivateKeyUrl()) {
+            data.put("privateKeyUrl", contextPath + result.getPrivateKeyUrl());
         }
 
+        return data;
+    }
+
+    private void handleCheckoutError(HttpServletRequest request,
+                                     HttpServletResponse response,
+                                     boolean ajax,
+                                     String message) throws ServletException, IOException {
+        if (ajax) {
+            writeJson(response, false, message, null);
+        } else {
+            request.setAttribute("error", message);
+            request.getRequestDispatcher("/cart.jsp").forward(request, response);
+        }
+    }
+
+    private PaymentMethod parsePaymentMethod(String value) {
+        try {
+            return PaymentMethod.valueOf(value);
+        } catch (Exception e) {
+            return PaymentMethod.COD;
+        }
+    }
+
+    private String trimToNull(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+        return value.trim();
+    }
+
+    private void clearCartSession(HttpSession session, Cart cart) {
+        cart.removeAllItems();
+        session.setAttribute("cart", cart);
+        session.removeAttribute("discountAmount");
+        session.removeAttribute("voucherCode");
+        session.removeAttribute("finalPrice");
+        session.removeAttribute("deliveryAddress");
+        session.removeAttribute("paymentMethod");
+    }
+
+    private boolean isAjax(HttpServletRequest request) {
+        return "XMLHttpRequest".equals(request.getHeader("X-Requested-With"));
+    }
+
+    private void writeJson(HttpServletResponse response,
+                           boolean success,
+                           String message,
+                           Map<String, Object> data) throws IOException {
+        response.setContentType("application/json;charset=UTF-8");
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("success", success);
+        result.put("message", message);
+
+        if (data != null) {
+            result.putAll(data);
+        }
+
+        response.getWriter().write(gson.toJson(result));
     }
 }

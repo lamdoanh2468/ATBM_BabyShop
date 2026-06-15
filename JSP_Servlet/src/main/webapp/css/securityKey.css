@@ -251,6 +251,28 @@
     font-size: 0.72rem;
 }
 
+.sk-message.warning {
+    background: #fffbeb;
+    color: #92400e;
+    border: 1px solid #fde68a;
+}
+
+.sk-message.warning i {
+    color: #f59e0b;
+}
+
+.sk-inline-link {
+    display: inline-block;
+    margin-top: 8px;
+    color: #4f46e5;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.sk-inline-link:hover {
+    text-decoration: underline;
+}
+
 @media (max-width: 768px) {
     .sk-info-grid {
         grid-template-columns: 1fr;

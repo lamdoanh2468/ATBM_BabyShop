@@ -11,7 +11,6 @@
   <component name="ChangeListManager">
     <list default="true" id="97a956ea-ffd1-4b74-beee-3c61e36dbf13" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/JSP_Servlet/src/main/resources/db.properties" beforeDir="false" afterPath="$PROJECT_DIR$/JSP_Servlet/src/main/resources/db.properties" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -19,7 +18,7 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="332" />
+    <option name="cachedIndexableFilesCount" value="347" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="Git.Settings">
@@ -220,6 +219,12 @@
       <workItem from="1780245079189" duration="98000" />
       <workItem from="1780320134768" duration="2136000" />
       <workItem from="1780326159870" duration="15000" />
+      <workItem from="1780744295773" duration="317000" />
+      <workItem from="1780752374416" duration="686000" />
+      <workItem from="1780753550288" duration="40000" />
+      <workItem from="1780759327245" duration="21000" />
+      <workItem from="1780797699561" duration="388000" />
+      <workItem from="1780817416974" duration="83000" />
     </task>
     <servers />
   </component>

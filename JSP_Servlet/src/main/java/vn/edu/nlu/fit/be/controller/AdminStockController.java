@@ -27,7 +27,7 @@ public class AdminStockController extends HttpServlet {
 
         Account acc = (Account) session.getAttribute("USER");
         if (acc.getRole() <= 0) {
-            resp.sendRedirect(req.getContextPath() + "/403.jsp");
+            resp.sendRedirect(req.getContextPath() + "/error/403.jsp");
             return;
         }
 

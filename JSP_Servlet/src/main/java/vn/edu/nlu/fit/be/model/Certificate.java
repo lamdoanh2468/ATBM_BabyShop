@@ -4,33 +4,35 @@ import java.sql.Timestamp;
 
 public class Certificate {
 
-    private long certificateId;
-    private long accountId;
+    private int certificateId;
+    private int accountId;
     private String publicKeyPem;
     private String certificatePem;
     private String serialNumber;
-    private String status;
+    private CertificateStatus status;
     private Timestamp issuedAt;
+    private Timestamp createdAt;
     private Timestamp expiredAt;
     private Timestamp revokedAt;
+    private Timestamp lostAt;
     private String revokeReason;
-    private Timestamp createdAt;
 
-    public Certificate() {}
+    public Certificate() {
+    }
 
-    public long getCertificateId() {
+    public int getCertificateId() {
         return certificateId;
     }
 
-    public void setCertificateId(long certificateId) {
+    public void setCertificateId(int certificateId) {
         this.certificateId = certificateId;
     }
 
-    public long getAccountId() {
+    public int getAccountId() {
         return accountId;
     }
 
-    public void setAccountId(long accountId) {
+    public void setAccountId(int accountId) {
         this.accountId = accountId;
     }
 
@@ -58,11 +60,11 @@ public class Certificate {
         this.serialNumber = serialNumber;
     }
 
-    public String getStatus() {
+    public CertificateStatus getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(CertificateStatus status) {
         this.status = status;
     }
 
@@ -72,6 +74,14 @@ public class Certificate {
 
     public void setIssuedAt(Timestamp issuedAt) {
         this.issuedAt = issuedAt;
+    }
+
+    public Timestamp getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Timestamp createdAt) {
+        this.createdAt = createdAt;
     }
 
     public Timestamp getExpiredAt() {
@@ -90,19 +100,19 @@ public class Certificate {
         this.revokedAt = revokedAt;
     }
 
+    public Timestamp getLostAt() {
+        return lostAt;
+    }
+
+    public void setLostAt(Timestamp lostAt) {
+        this.lostAt = lostAt;
+    }
+
     public String getRevokeReason() {
         return revokeReason;
     }
 
     public void setRevokeReason(String revokeReason) {
         this.revokeReason = revokeReason;
-    }
-
-    public Timestamp getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Timestamp createdAt) {
-        this.createdAt = createdAt;
     }
 }
