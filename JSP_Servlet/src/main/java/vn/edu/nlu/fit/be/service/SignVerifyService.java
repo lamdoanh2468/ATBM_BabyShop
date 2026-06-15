@@ -195,7 +195,7 @@ public class SignVerifyService {
         verifier.initVerify(userCertificate.getPublicKey());
         verifier.update(sign.getOrderHash().getBytes(StandardCharsets.UTF_8));
 
-        byte[] signatureBytes = Base64.getDecoder().decode(signedOrder.getSignatureValue());
+        byte[] signatureBytes = Base64.getMimeDecoder().decode(signedOrder.getSignatureValue().trim());
         boolean verified = verifier.verify(signatureBytes);
 
         System.out.println("VERIFY DEBUG:");
@@ -339,7 +339,7 @@ public class SignVerifyService {
             return DEFAULT_SIGNATURE_ALGORITHM;
         }
 
-        String normalizedAlgo = signAlgo.trim();
+        String normalizedAlgo = signAlgo.trim().replace("-", "");
         if (!ALLOWED_SIGNATURE_ALGORITHMS.contains(normalizedAlgo)) {
             throw new SecurityException("Unsupported signature algorithm: " + normalizedAlgo);
         }
