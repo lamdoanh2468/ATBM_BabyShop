@@ -120,7 +120,7 @@
 
                             <option value="SIGNATURE_INVALID" ${order.statusOrder eq 'SIGNATURE_INVALID' ? 'selected'
                                     : '' }>
-                              Chữ ký điện tử không hợp lệ
+                                Chữ ký điện tử không hợp lệ
                             </option>
 
                             <option value="TAMPERED" ${order.statusOrder eq 'TAMPERED' ? 'selected'
@@ -148,13 +148,6 @@
                            title="Xem chi tiết">
                             <i class="fa-solid fa-eye"></i>
                         </a>
-
-                        <a class="btn-small"
-                           href="${pageContext.request.contextPath}/admin/orders/edit?id=${order.orderId}"
-                           title="Sửa đơn hàng"
-                           style="background:#6C63FF;color:#fff;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;">
-                            <i class="fa-solid fa-pen"></i>
-                        </a>
                     </td>
                 </tr>
             </c:forEach>
@@ -175,54 +168,93 @@
 
 </div>
 
+
+</body>
 <script>
-    function updateStatus(select) {
+    async function updateStatus(select) {
         const id = select.getAttribute('data-id');
         const status = select.value;
         const previousValue = select.getAttribute('data-previous') || 'WAITING_SIGNATURE';
 
-        // Xác nhận khi chọn Cancelled
         if (status === 'CANCELLED') {
-            var confirmed = confirm('Bạn chắc chắn muốn huỷ đơn hàng này không?\nHành động này sẽ không được hoàn tác.');
-            if (!confirmed) {
-                // Khôi phục giá trị cũ nếu user hủy
+            const result = await Swal.fire({
+                icon: 'warning',
+                title: 'Bạn chắc chắn muốn huỷ đơn hàng này không?',
+                text: 'Hành động này sẽ không được hoàn tác.',
+                showCancelButton: true,
+                confirmButtonText: 'Đồng ý huỷ',
+                cancelButtonText: 'Không',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                reverseButtons: true
+            });
+
+            if (!result.isConfirmed) {
                 select.value = previousValue;
                 return;
             }
         }
 
-        var url = '${pageContext.request.contextPath}/admin/orders/status?id=' + id + '&status=' + status;
+        const url = '${pageContext.request.contextPath}/admin/orders/status?id='
+            + encodeURIComponent(id)
+            + '&status='
+            + encodeURIComponent(status);
 
         fetch(url)
             .then(function (res) {
                 return res.text();
             })
             .then(function (txt) {
-                if (txt === "OK") {
-                    console.log("Cập nhật thành công");
-                    // Cập nhật previous value và disable nếu cần
+                if (txt === 'OK') {
                     select.setAttribute('data-previous', status);
+                    select.className = 'status-select ' + status;
+
                     if (status === 'CANCELLED' || status === 'DONE') {
                         select.disabled = true;
                     }
-                } else if (txt === "PARTIAL") {
-                    alert("Trạng thái đã cập nhật nhưng có lỗi khi xử lý kho hàng");
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Cập nhật thành công',
+                        timer: 1200,
+                        showConfirmButton: false
+                    });
+
+                } else if (txt === 'PARTIAL') {
                     select.setAttribute('data-previous', status);
+                    select.className = 'status-select ' + status;
+
                     if (status === 'CANCELLED' || status === 'DONE') {
                         select.disabled = true;
                     }
+
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Trạng thái đã cập nhật',
+                        text: 'Nhưng có lỗi khi xử lý kho hàng.'
+                    });
+
                 } else {
-                    alert("Cập nhật trạng thái thất bại: " + txt);
-                    // Khôi phục giá trị cũ nếu thất bại
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Cập nhật thất bại',
+                        text: txt
+                    });
+
                     select.value = previousValue;
                 }
             })
             .catch(function (err) {
-                alert("Lỗi kết nối: " + err);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Lỗi kết nối',
+                    text: String(err)
+                });
+
                 select.value = previousValue;
             });
     }
 </script>
-</body>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 </html>

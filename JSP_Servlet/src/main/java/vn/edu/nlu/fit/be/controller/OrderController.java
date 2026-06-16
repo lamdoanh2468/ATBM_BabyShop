@@ -1,4 +1,4 @@
-forrpackage vn.edu.nlu.fit.be.controller;
+package vn.edu.nlu.fit.be.controller;
 
 import java.io.IOException;
 import java.util.HashMap;
