@@ -16,7 +16,7 @@ body {
 }
 .sidebar {
     padding: 20px;
-    background: linear-gradient(45deg, #A696FF, #FFB4D3, #A9F3E3);
+    background: linear-gradient(45deg, #4d7cff, #FFB4D3, #A9F3E3);
     background-size: 200%;
     animation: gradientMove 12s ease infinite;
     display: flex;
@@ -38,7 +38,7 @@ body {
     padding: 0 14px;
     border-radius: 14px;
     background: rgba(255,255,255,0.35);
-    color: #4D4A7E;
+    color: #00114d;
     text-decoration: none;
     font-weight: 500;
     backdrop-filter: blur(4px);
@@ -48,7 +48,7 @@ body {
 .sidebar .menu a:hover,
 .sidebar .menu a.active {
     background: #fff;
-    color: #6C63FF;
+    color: #0031da;
     box-shadow: 0 4px 12px rgba(108, 99, 255, 0.25);
 }
 
@@ -79,7 +79,7 @@ body {
 .main h2 {
     font-size: 24px;
     font-weight: 600;
-    color: #514EA5;
+    color: #002299;
     margin-bottom: 20px;
 }
 .dashboard-cards {
@@ -190,7 +190,7 @@ body {
 .data-table th {
     padding: 14px 16px;
     background: #ECEBFF;
-    color: #5A56A8;
+    color: #0039e6;
     font-weight: 600;
     text-align: center;
 }
@@ -242,12 +242,12 @@ body {
     display: flex;
     gap: 10px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    border-left: 4px solid #A696FF;
+    border-left: 4px solid #4d7cff;
 }
 
 .task-time {
     font-weight: 600;
-    color: #6C63FF;
+    color: #0031da;
 }
 
 .add-btn {
@@ -255,7 +255,7 @@ body {
     width: 50px;
     height: 50px;
     border-radius: 50%;
-    background: #6C63FF;
+    background: #0031da;
     border: none;
     color: white;
     font-size: 24px;
@@ -268,6 +268,7 @@ body {
     transform: scale(1.08);
 }
 .btn-small {
+    margin: 0 4px;
     padding: 5px 10px;
     border-radius: 8px;
     border: none;
@@ -301,7 +302,7 @@ body {
 /* Tiêu đề trong form/list */
 .voucher-form h3,
 .voucher-list h3 {
-    color: #5A56A8;
+    color: #0039e6;
     font-size: 18px;
     margin-bottom: 15px;
 }
@@ -316,7 +317,7 @@ body {
 /* Form item */
 .form-item label {
     font-weight: 600;
-    color: #514EA5;
+    color: #002299;
     margin-bottom: 6px;
 }
 
@@ -331,14 +332,14 @@ body {
 
 .form-item input:focus,
 .form-item select:focus {
-    border-color: #A696FF;
+    border-color: #4d7cff;
     background: #fff;
     box-shadow: 0 0 0 3px rgba(166,150,255,0.25);
 }
 
 /* Button primary (voucher, category, warehouse) */
 .btn-primary {
-    background: linear-gradient(135deg, #A696FF, #C8B8FF);
+    background: linear-gradient(135deg, #4d7cff, #C8B8FF);
     padding: 12px;
     border-radius: 12px;
     border: none;
@@ -374,6 +375,7 @@ body {
 
 /* Hành động nút */
 .btn-small {
+    margin: 0 4px;
     padding: 6px 12px;
     border-radius: 8px;
     font-size: 13px;
@@ -389,16 +391,16 @@ body {
 }
 
 .settings-tab:hover {
-    color: #6C63FF;
+    color: #0031da;
 }
 
 .settings-tab.active {
-    color: #6C63FF !important;
+    color: #0031da !important;
 }
 
 /* Gạch dưới tab */
 .settings-tab.active::after {
-    background: #A696FF !important;
+    background: #4d7cff !important;
 }
 
 /* Content card đồng bộ */
@@ -416,12 +418,12 @@ body {
 
 .tab-content .form-item input:focus,
 .tab-content .form-item select:focus {
-    border-color: #A696FF;
+    border-color: #4d7cff;
 }
 
 /* Button trong settings */
 .settings-container .btn-primary {
-    background: linear-gradient(135deg, #A696FF, #C8B8FF) !important;
+    background: linear-gradient(135deg, #4d7cff, #C8B8FF) !important;
 }
 
 /* Logout button trong settings */
@@ -450,7 +452,7 @@ body {
 }
 
 .search-box input:focus {
-    border-color: #A696FF;
+    border-color: #4d7cff;
     background: #fff;
     box-shadow: 0 0 0 3px rgba(166,150,255,0.25);
 }
@@ -467,14 +469,14 @@ body {
     border-radius: 10px;
     border: 1px solid #D9D6FF;
     background: #F4F3FF;
-    color: #4D4A7E;
+    color: #00114d;
     font-size: 14px;
     cursor: pointer;
     transition: 0.25s;
 }
 
 .status-select:focus {
-    border-color: #A696FF;
+    border-color: #4d7cff;
     background: #fff;
     box-shadow: 0 0 0 3px rgba(166,150,255,0.25);
 }
@@ -565,7 +567,7 @@ body {
 }
 
 .form-item textarea:focus {
-    border-color: #A696FF;
+    border-color: #4d7cff;
     background: #fff;
     box-shadow: 0 0 0 3px rgba(166,150,255,0.25);
 }
@@ -624,7 +626,7 @@ body {
 /* Label */
 .product-modal .form-item label {
     font-weight: 600;
-    color: #514EA5;
+    color: #002299;
     margin-bottom: 6px;
     display: block;
 }
@@ -646,7 +648,7 @@ body {
 .product-modal .form-item input:focus,
 .product-modal .form-item select:focus,
 .product-modal .form-item textarea:focus {
-    border-color: #A696FF;
+    border-color: #4d7cff;
     background: #fff;
     box-shadow: 0 0 0 3px rgba(166,150,255,0.25);
 }
@@ -696,7 +698,7 @@ body {
      align-items: center;
      gap: 8px;
      padding: 12px 20px;
-     background: linear-gradient(135deg, #6C63FF, #A696FF);
+     background: linear-gradient(135deg, #0031da, #4d7cff);
      color: #fff;
      font-weight: 600;
      font-size: 14px;
@@ -714,7 +716,7 @@ body {
 .btn-add:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(108, 99, 255, 0.35);
-    background: linear-gradient(135deg, #514EA5, #6C63FF);
+    background: linear-gradient(135deg, #002299, #0031da);
 }
 
 /* Active click */
@@ -753,7 +755,7 @@ body {
     padding: 7px 12px;
     border-radius: 999px;
     background: rgba(108, 99, 255, 0.1);
-    color: #6c63ff;
+    color: #0031da;
     font-size: 12px;
     font-weight: 700;
     letter-spacing: 0.08em;
@@ -780,14 +782,14 @@ body {
     background: #fff;
     border: 1px solid #dddafc;
     text-decoration: none;
-    color: #4d4a7e;
+    color: #00114d;
     font-weight: 600;
     transition: 0.25s ease;
 }
 
 .product-back-link:hover {
     transform: translateY(-2px);
-    border-color: #b9b0ff;
+    border-color: #80aaff;
     box-shadow: 0 8px 18px rgba(108, 99, 255, 0.12);
 }
 
@@ -819,7 +821,7 @@ body {
 }
 
 .product-form-card-head h3 {
-    color: #514ea5;
+    color: #002299;
     font-size: 20px;
     margin-bottom: 6px;
 }
@@ -836,7 +838,7 @@ body {
     padding: 10px 14px;
     border-radius: 14px;
     background: #f6f3ff;
-    color: #6c63ff;
+    color: #0031da;
     font-weight: 600;
     white-space: nowrap;
 }
@@ -871,14 +873,14 @@ body {
     border-radius: 12px;
     border: 1px solid #dddafc;
     background: #fff;
-    color: #4d4a7e;
+    color: #00114d;
     text-decoration: none;
     font-weight: 600;
     transition: 0.25s ease;
 }
 
 .product-cancel-link:hover {
-    border-color: #bbb3ff;
+    border-color: #80aaff;
     background: #faf9ff;
 }
 
@@ -914,7 +916,7 @@ body {
     height: 92px;
     border-radius: 28px;
     background: rgba(108, 99, 255, 0.1);
-    color: #8b82da;
+    color: #3366ff;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -937,14 +939,14 @@ body {
 }
 
 .product-preview-body h3 {
-    color: #403d7f;
+    color: #000c33;
     font-size: 22px;
     line-height: 1.35;
     margin-bottom: 10px;
 }
 
 .product-preview-body p {
-    color: #74708f;
+    color: #666666;
     line-height: 1.6;
     margin-bottom: 18px;
 }
@@ -964,13 +966,13 @@ body {
 
 .product-preview-meta span {
     display: block;
-    color: #8884a8;
+    color: #888888;
     font-size: 12px;
     margin-bottom: 6px;
 }
 
 .product-preview-meta strong {
-    color: #4f4b93;
+    color: #001966;
     font-size: 16px;
 }
 

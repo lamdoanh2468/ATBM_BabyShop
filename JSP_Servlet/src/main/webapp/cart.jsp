@@ -1,6 +1,18 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ page import="vn.edu.nlu.fit.be.service.CertificateService" %>
+<%@ page import="vn.edu.nlu.fit.be.model.Account" %>
+<%
+    Account userAcc = (Account) session.getAttribute("USER");
+    if (userAcc != null) {
+        CertificateService certSvc = new CertificateService();
+        if (!certSvc.hasPendingPrivateKey(userAcc.getAccountId())) {
+            session.removeAttribute("privateKeyUrl");
+        }
+    }
+%>
+
 
 <!DOCTYPE html>
 <html lang="vi">
@@ -538,21 +550,29 @@
             : "1. Tải dữ liệu đơn hàng";
         let privateKeyHtml = "";
 
-        if (privateKeyUrl) {
+        if (!orderData.hasActiveCert) {
             privateKeyHtml =
                 '<a id="btnDownloadPrivateKey" ' +
                 '   class="sign-step-card warning" ' +
-                '   href="' + escapeAttr(privateKeyUrl) + '">' +
-                '   <strong>3. Tải private key</strong>' +
-                '   <span>Private key chỉ nên tải một lần. Sau khi tải xong, hãy dùng file đó để ký đơn hàng.</span>' +
+                '   href="' + CONTEXT_PATH + '/security-key" target="_blank">' +
+                '   <strong>3. Người dùng chưa có private key, tải private key</strong>' +
+                '   <span>Chuyển hướng sang trang quản lý để tạo chứng chỉ và tải private key.</span>' +
+                '</a>';
+        } else if (privateKeyUrl) {
+            privateKeyHtml =
+                '<a id="btnDownloadPrivateKey" ' +
+                '   class="sign-step-card warning" ' +
+                '   href="' + CONTEXT_PATH + '/security-key" target="_blank">' +
+                '   <strong>3. Bạn chưa tải private key, tải ngay</strong>' +
+                '   <span>Chuyển hướng sang trang quản lý để tải private key.</span>' +
                 '</a>';
         } else {
             privateKeyHtml =
                 '<div class="sign-step-card success">' +
-                '   <strong>3. Dùng private key đã lưu</strong>' +
+                '   <strong>3. Bạn đã tải private key</strong>' +
                 '   <span>Nếu bạn vẫn còn private key, hãy dùng file đó để ký đơn hàng.</span>' +
                 '   <button type="button" id="btnReissuePrivateKey" class="sign-lost-key-link">' +
-                '       Tôi mất private key - cấp lại chứng thư và key mới' +
+                '       Tôi mất private key - tạo lại chứng thư và key mới' +
                 '   </button>' +
                 '</div>';
         }
@@ -625,20 +645,18 @@
                     });
                 }
                 const btnDownloadPrivateKey = document.getElementById("btnDownloadPrivateKey");
-
+                let hasNavigatedToSecurityKey = false;
                 if (btnDownloadPrivateKey) {
                     btnDownloadPrivateKey.addEventListener("click", function () {
-                        setTimeout(function () {
-                            showSigningPopup({
-                                orderId: orderData.orderId,
-                                orderHash: orderData.orderHash || "",
-                                signingUrl: orderData.signingUrl || "#",
-                                signToolUrl: orderData.signToolUrl || (CONTEXT_PATH + "/signing-tool/download"),
-                                privateKeyUrl: ""
-                            });
-                        }, 500);
+                        hasNavigatedToSecurityKey = true;
                     });
                 }
+                
+                document.addEventListener("visibilitychange", function() {
+                    if (document.visibilityState === 'visible' && hasNavigatedToSecurityKey) {
+                        window.location.reload();
+                    }
+                });
             }
         });
     }
@@ -786,6 +804,7 @@
                             signingUrl: data.signingUrl || (CONTEXT_PATH + "/order-sign/order-json?orderId=" + encodeURIComponent(orderId)),
                             signToolUrl: data.signToolUrl || (CONTEXT_PATH + "/signing-tool/download"),
                             privateKeyUrl: normalizeAppUrl(data.privateKeyUrl || ""),
+                            hasActiveCert: true,
                             retryMessage: "Vui lòng tải lại dữ liệu đơn hàng, ký lại rồi upload file chữ ký mới."
                         });
                     });
@@ -929,6 +948,7 @@
             signingUrl: "${pageContext.request.contextPath}${sessionScope.signingUrl}",
             signToolUrl: "${pageContext.request.contextPath}/signing-tool/download",
             privateKeyUrl: "${not empty sessionScope.privateKeyUrl ? pageContext.request.contextPath : ''}${not empty sessionScope.privateKeyUrl ? sessionScope.privateKeyUrl : ''}",
+            hasActiveCert: ${sessionScope.hasActiveCert != null ? sessionScope.hasActiveCert : false},
             retryMessage: "Vui lòng tải lên lại file chữ ký có định dạng .json"
         });
     });
@@ -1005,7 +1025,8 @@
                 orderHash: data.orderHash || orderData.orderHash || "",
                 signingUrl: data.signingUrl || orderData.signingUrl || "#",
                 signToolUrl: data.signToolUrl || orderData.signToolUrl || (CONTEXT_PATH + "/signing-tool/download"),
-                privateKeyUrl: normalizeAppUrl(data.privateKeyUrl || "/security-key/download-private-key")
+                privateKeyUrl: normalizeAppUrl(data.privateKeyUrl || "/security-key/download-private-key"),
+                hasActiveCert: true
             });
         } catch (error) {
             Swal.fire({

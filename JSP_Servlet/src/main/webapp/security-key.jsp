@@ -116,6 +116,9 @@
                                     </c:when>
                                     <c:otherwise>
                                         Bạn chưa có chứng thư số đang hoạt động
+                                        <p style="font-size: 0.9rem; font-weight: normal; color: #64748b; margin-top: 0.5rem; max-width: 600px; line-height: 1.5;">
+                                            * Chứng thư số và Private Key được sử dụng để <strong>ký xác thực điện tử các đơn hàng</strong> của bạn. Điều này giúp đảm bảo tính bảo mật, tính toàn vẹn và không thể chối bỏ giao dịch của bạn với chúng tôi. Hãy tạo chứng thư số và tải Private Key về máy (chỉ tải được 1 lần duy nhất) để tiếp tục thực hiện việc đặt hàng an toàn!
+                                        </p>
                                     </c:otherwise>
                                 </c:choose>
                             </h4>
@@ -189,7 +192,7 @@
                             <i class="fas fa-plus-circle"></i>
                             <c:choose>
                                 <c:when test="${hasCertificate}">
-                                    Cấp lại chứng thư và private key
+                                    Tạo lại chứng thư và private key
                                 </c:when>
                                 <c:otherwise>
                                     Tạo chứng thư và private key
@@ -271,7 +274,7 @@
 <script>
     function showCreateModal() {
         Swal.fire({
-            title: 'Cấp lại chứng thư và private key?',
+            title: 'Tạo lại chứng thư và private key?',
             html:
                 '<div style="text-align:left; line-height:1.6">' +
                 '<p>Hệ thống sẽ tạo <strong>cặp khóa RSA mới</strong> và <strong>chứng thư mới</strong> cho bạn.</p>' +
@@ -281,7 +284,7 @@
                 '</div>',
             icon: 'question',
             showCancelButton: true,
-            confirmButtonText: 'Xác nhận cấp mới',
+            confirmButtonText: 'Xác nhận tạo mới',
             cancelButtonText: 'Hủy',
             confirmButtonColor: '#6366f1',
             cancelButtonColor: '#64748b'
