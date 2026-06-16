@@ -7,6 +7,7 @@ public class CheckoutSignResult {
     private String signingUrl;
     private String signToolUrl;
     private String privateKeyUrl;
+    private boolean hasActiveCert;
 
     public CheckoutSignResult() {
     }
@@ -15,12 +16,22 @@ public class CheckoutSignResult {
                               String orderHash,
                               String signingUrl,
                               String signToolUrl,
-                              String privateKeyUrl) {
+                              String privateKeyUrl,
+                              boolean hasActiveCert) {
         this.orderId = orderId;
         this.orderHash = orderHash;
         this.signingUrl = signingUrl;
         this.signToolUrl = signToolUrl;
         this.privateKeyUrl = privateKeyUrl;
+        this.hasActiveCert = hasActiveCert;
+    }
+
+    public boolean isHasActiveCert() {
+        return hasActiveCert;
+    }
+
+    public void setHasActiveCert(boolean hasActiveCert) {
+        this.hasActiveCert = hasActiveCert;
     }
 
     public int getOrderId() {
