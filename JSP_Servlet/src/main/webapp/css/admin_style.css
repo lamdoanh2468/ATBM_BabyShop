@@ -215,6 +215,23 @@ body {
     background: #FFF4F4;
     color: #FF6B6B;
 }
+.status.done,
+.status.verified {
+    background: #E9FAEF;
+    color: #2ECC71;
+}
+
+.status.pending,
+.status.waiting {
+    background: #FFF6D9;
+    color: #C79300;
+}
+
+.status.cancelled,
+.status.invalid {
+    background: #FFF4F4;
+    color: #FF6B6B;
+}
 .right-panel {
     background: #FAF9FF;
     padding: 30px 20px;
