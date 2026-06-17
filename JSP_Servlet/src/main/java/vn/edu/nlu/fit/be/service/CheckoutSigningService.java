@@ -29,7 +29,7 @@ public class CheckoutSigningService {
         validateInput(account, cart, deliveryAddress);
         ensureStockAvailable(cart);
 
-        certificateService.ensureActiveCert(account.getAccountId());
+        boolean hasActiveCert = certificateService.getActiveCertByAccountId(account.getAccountId()).isPresent();
         boolean hasPrivateKeyForDownload = certificateService.hasPendingPrivateKey(account.getAccountId());
 
         int orderId = ordersService.createOrderFromCart(
@@ -53,7 +53,8 @@ public class CheckoutSigningService {
                 orderToSign.getOrderHash(),
                 ORDER_JSON_URL_PREFIX + orderId,
                 SIGN_TOOL_URL,
-                hasPrivateKeyForDownload ? PRIVATE_KEY_URL : null
+                hasPrivateKeyForDownload ? PRIVATE_KEY_URL : null,
+                hasActiveCert
         );
     }
 

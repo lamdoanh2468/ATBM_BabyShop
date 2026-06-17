@@ -190,6 +190,7 @@ public class OrderController extends HttpServlet {
         if (result.hasPrivateKeyUrl()) {
             data.put("privateKeyUrl", contextPath + result.getPrivateKeyUrl());
         }
+        data.put("hasActiveCert", result.isHasActiveCert());
 
         return data;
     }

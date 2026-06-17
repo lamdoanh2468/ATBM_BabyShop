@@ -68,8 +68,8 @@
                 <li onclick="location.href='${pageContext.request.contextPath}/change-password'">
                     <i class="fas fa-key"></i> Đổi mật khẩu
                 </li>
-                <li onclick="location.href='${pageContext.request.contextPath}/security-key/download-private-key'">
-                    <i class="fas fa-shield-halved"></i> Chữ ký điện tử
+                <li onclick="location.href='${pageContext.request.contextPath}/security-key'">
+                    <i class="fas fa-shield-halved"></i> Chữ ký điện tử và chứng thư số
                 </li>
             </ul>
         </aside>
@@ -124,7 +124,7 @@
                             </c:when>
 
                             <c:when test="${orderStatus == 'VERIFIED'}">
-                                <c:set var="statusLabel" value="Đã xác thực chữ ký"/>
+                                <c:set var="statusLabel" value="Đang chờ xác nhận"/>
                                 <c:set var="statusClass" value="bp-status-verified"/>
                                 <c:set var="statusIcon" value="fa-solid fa-certificate"/>
                             </c:when>

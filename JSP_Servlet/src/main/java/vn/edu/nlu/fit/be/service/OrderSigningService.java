@@ -2,10 +2,7 @@ package vn.edu.nlu.fit.be.service;
 
 import vn.edu.nlu.fit.be.dao.OrderSignDao;
 import vn.edu.nlu.fit.be.dto.OrderToSignRes;
-import vn.edu.nlu.fit.be.model.Order;
-import vn.edu.nlu.fit.be.model.OrderDetail;
-import vn.edu.nlu.fit.be.model.OrderSign;
-import vn.edu.nlu.fit.be.model.Certificate;
+import vn.edu.nlu.fit.be.model.*;
 
 import java.security.MessageDigest;
 import java.util.Comparator;
@@ -15,8 +12,6 @@ import java.util.List;
 public class OrderSigningService {
 
     private static final String HASH_ALGORITHM = "SHA-256";
-    private static final String WAITING_SIGNATURE = "WAITING_SIGNATURE";
-
     private final OrdersService ordersService = new OrdersService();
     private final CertificateService certificateService = new CertificateService();
     private final OrderSignDao orderSignDao = new OrderSignDao();
@@ -35,7 +30,7 @@ public class OrderSigningService {
         sign.setSnapshotJson(snapshot);
         sign.setOrderHash(hash);
         sign.setHashAlgorithm(HASH_ALGORITHM);
-        sign.setStatus(WAITING_SIGNATURE);
+        sign.setStatus(OrderStatus.WAITING_SIGNATURE.name());
 
         orderSignDao.insert(sign);
 
@@ -94,12 +89,14 @@ public class OrderSigningService {
             return null;
         }
 
-        Certificate cert = certificateService.getActiveCertByAccountId(accountId).orElseThrow(() -> new IllegalStateException("No active certificate"));
+        Certificate cert = certificateService.getActiveCertByAccountId(accountId).orElse(null);
 
         OrderToSignRes signRes = new OrderToSignRes();
         signRes.setOrderId(orderId);
         signRes.setAccountId(accountId);
-        signRes.setCertificateId(cert.getCertificateId());
+        if (cert != null) {
+            signRes.setCertificateId(cert.getCertificateId());
+        }
         signRes.setOrderHash(sign.getOrderHash());
         signRes.setSnapshotJson(sign.getSnapshotJson());
         signRes.setHashAlgorithm(sign.getHashAlgorithm());
