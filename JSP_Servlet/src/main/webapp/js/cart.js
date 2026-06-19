@@ -208,6 +208,8 @@ function showSigningPopup(orderData) {
         hasActiveCert: Boolean(orderData.hasActiveCert)
     };
 
+    let visibilityHandler = null;
+
     Swal.fire({
         icon: "info",
         title: "Đơn hàng #" + normalizedOrderData.orderId + " đang chờ ký",
@@ -220,8 +222,6 @@ function showSigningPopup(orderData) {
         didOpen: function () {
             const btnUploadSignature = document.getElementById("btnUploadSignature");
             const btnReissuePrivateKey = document.getElementById("btnReissuePrivateKey");
-            const btnDownloadPrivateKey = document.getElementById("btnDownloadPrivateKey");
-            let hasNavigatedToSecurityKey = false;
 
             if (btnUploadSignature) {
                 btnUploadSignature.addEventListener("click", function () {
@@ -235,22 +235,22 @@ function showSigningPopup(orderData) {
                 });
             }
 
-            if (btnDownloadPrivateKey) {
-                btnDownloadPrivateKey.addEventListener("click", function () {
-                    hasNavigatedToSecurityKey = true;
-                });
-            }
-
             refreshPrivateKeyStatus(normalizedOrderData, false);
 
-            const visibilityHandler = function () {
-                if (document.visibilityState === "visible" && hasNavigatedToSecurityKey) {
-                    hasNavigatedToSecurityKey = false;
+            visibilityHandler = function () {
+                if (document.visibilityState === "visible" && document.getElementById("signStatusBox")) {
                     refreshPrivateKeyStatus(normalizedOrderData, true);
                 }
             };
 
-            document.addEventListener("visibilitychange", visibilityHandler, {once: false});
+            document.addEventListener("visibilitychange", visibilityHandler);
+            window.addEventListener("focus", visibilityHandler);
+        },
+        willClose: function () {
+            if (visibilityHandler) {
+                document.removeEventListener("visibilitychange", visibilityHandler);
+                window.removeEventListener("focus", visibilityHandler);
+            }
         }
     });
 }
@@ -288,13 +288,6 @@ async function refreshPrivateKeyStatus(orderData, showSuccessMessage) {
         if (btnReissuePrivateKey && typeof reissuePrivateKey === "function") {
             btnReissuePrivateKey.addEventListener("click", function () {
                 reissuePrivateKey(updatedOrderData);
-            });
-        }
-
-        const btnDownloadPrivateKey = document.getElementById("btnDownloadPrivateKey");
-        if (btnDownloadPrivateKey) {
-            btnDownloadPrivateKey.addEventListener("click", function () {
-                // Người dùng sẽ sang tab security-key, khi quay lại popup sẽ check lại status.
             });
         }
 
