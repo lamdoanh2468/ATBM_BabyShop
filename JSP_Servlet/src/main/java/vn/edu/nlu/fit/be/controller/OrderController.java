@@ -170,6 +170,7 @@ public class OrderController extends HttpServlet {
         session.setAttribute("signOrderHash", result.getOrderHash());
         session.setAttribute("signingUrl", result.getSigningUrl());
         session.setAttribute("signToolUrl", result.getSignToolUrl());
+        session.setAttribute("hasActiveCert", result.isHasActiveCert());
 
         if (result.hasPrivateKeyUrl()) {
             session.setAttribute("privateKeyUrl", result.getPrivateKeyUrl());
