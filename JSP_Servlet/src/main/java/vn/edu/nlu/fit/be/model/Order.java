@@ -14,18 +14,11 @@ public class Order {
     private PaymentMethod paymentMethod;
     private Timestamp orderDate;
     private String username;
+    private int subtotalAmount;
+    private int discountAmount;
 
-    public String getUsername() {
-        return username;
+    public Order() {
     }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    //Constructor
-
-    public Order() {}
 
     public Order(int orderId, Timestamp orderDate, PaymentMethod paymentMethod, String deliveryAddress, int totalAmount, OrderStatus statusOrder, int voucherId, int accountId) {
         this.orderId = orderId;
@@ -37,6 +30,32 @@ public class Order {
         this.voucherId = voucherId;
         this.accountId = accountId;
 
+    }
+
+    public int getSubtotalAmount() {
+        return subtotalAmount;
+    }
+
+    public void setSubtotalAmount(int subtotalAmount) {
+        this.subtotalAmount = subtotalAmount;
+    }
+
+    public int getDiscountAmount() {
+        return discountAmount;
+    }
+
+    public void setDiscountAmount(int discountAmount) {
+        this.discountAmount = discountAmount;
+    }
+
+    //Constructor
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     // Getters & Setters

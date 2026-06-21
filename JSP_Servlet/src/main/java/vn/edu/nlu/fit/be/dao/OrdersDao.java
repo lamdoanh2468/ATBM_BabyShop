@@ -12,18 +12,38 @@ public class OrdersDao extends BaseDao {
 
     public int createOrderWithDetails(Order o, List<OrderDetail> details) {
         String insertOrderSql = """
-            INSERT INTO orders
-                (account_id, voucher_id, status, total_amount, delivery_address, payment_method, order_date)
-            VALUES
-                (:accountId, :voucherId, :status, :totalAmount, :deliveryAddress, :paymentMethod, NOW())
-        """;
+                    INSERT INTO orders
+                        (
+                            account_id,
+                            voucher_id,
+                            status,
+                            subtotal_amount,
+                            discount_amount,
+                            total_amount,
+                            delivery_address,
+                            payment_method,
+                            order_date
+                        )
+                    VALUES
+                        (
+                            :accountId,
+                            :voucherId,
+                            :status,
+                            :subtotalAmount,
+                            :discountAmount,
+                            :totalAmount,
+                            :deliveryAddress,
+                            :paymentMethod,
+                            NOW()
+                        )
+                """;
 
         String insertDetailSql = """
-            INSERT INTO order_details
-                (order_id, product_id, unit_price, quantity)
-            VALUES
-                (:orderId, :productId, :unitPrice, :quantity)
-        """;
+                    INSERT INTO order_details
+                        (order_id, product_id, unit_price, quantity)
+                    VALUES
+                        (:orderId, :productId, :unitPrice, :quantity)
+                """;
 
         return jdbi.inTransaction(handle -> {
             int orderId = handle.createUpdate(insertOrderSql)
@@ -33,6 +53,9 @@ public class OrdersDao extends BaseDao {
                     .bind("totalAmount", o.getTotalAmount())
                     .bind("deliveryAddress", o.getDeliveryAddress())
                     .bind("paymentMethod", o.getPaymentMethod().name())
+                    .bind("subtotalAmount", o.getSubtotalAmount())
+                    .bind("discountAmount", o.getDiscountAmount())
+                    .bind("totalAmount", o.getTotalAmount())
                     .executeAndReturnGeneratedKeys("order_id")
                     .mapTo(int.class)
                     .one();
@@ -55,20 +78,20 @@ public class OrdersDao extends BaseDao {
 
     public List<Order> getAllOrders() {
         String sql = """
-            SELECT
-                o.order_id         AS orderId,
-                o.account_id       AS accountId,
-                o.voucher_id       AS voucherId,
-                o.order_date       AS orderDate,
-                o.total_amount     AS totalAmount,
-                o.delivery_address AS deliveryAddress,
-                o.payment_method   AS paymentMethod,
-                o.status           AS statusOrder,
-                a.username         AS username
-            FROM orders o
-            JOIN accounts a ON o.account_id = a.account_id
-            ORDER BY o.order_date DESC
-        """;
+                    SELECT
+                        o.order_id         AS orderId,
+                        o.account_id       AS accountId,
+                        o.voucher_id       AS voucherId,
+                        o.order_date       AS orderDate,
+                        o.total_amount     AS totalAmount,
+                        o.delivery_address AS deliveryAddress,
+                        o.payment_method   AS paymentMethod,
+                        o.status           AS statusOrder,
+                        a.username         AS username
+                    FROM orders o
+                    JOIN accounts a ON o.account_id = a.account_id
+                    ORDER BY o.order_date DESC
+                """;
 
         return jdbi.withHandle(handle ->
                 handle.createQuery(sql)
@@ -77,6 +100,9 @@ public class OrdersDao extends BaseDao {
                             o.setOrderId(rs.getInt("orderId"));
                             o.setAccountId(rs.getInt("accountId"));
                             o.setVoucherId(rs.getInt("voucherId"));
+                            o.setSubtotalAmount(rs.getInt("subtotalAmount"));
+                            o.setDiscountAmount(rs.getInt("discountAmount"));
+                            o.setTotalAmount(rs.getInt("totalAmount"));
                             o.setOrderDate(rs.getTimestamp("orderDate"));
                             o.setTotalAmount(rs.getInt("totalAmount"));
                             o.setDeliveryAddress(rs.getString("deliveryAddress"));
@@ -94,20 +120,20 @@ public class OrdersDao extends BaseDao {
 
     public Order getOrderById(int orderId) {
         String sql = """
-            SELECT
-                o.order_id         AS orderId,
-                o.account_id       AS accountId,
-                o.voucher_id       AS voucherId,
-                o.order_date       AS orderDate,
-                o.total_amount     AS totalAmount,
-                o.delivery_address AS deliveryAddress,
-                o.payment_method   AS paymentMethod,
-                o.status           AS statusOrder,
-                a.username         AS username
-            FROM orders o
-            JOIN accounts a ON o.account_id = a.account_id
-            WHERE o.order_id = :orderId
-        """;
+                    SELECT
+                        o.order_id         AS orderId,
+                        o.account_id       AS accountId,
+                        o.voucher_id       AS voucherId,
+                        o.order_date       AS orderDate,
+                        o.total_amount     AS totalAmount,
+                        o.delivery_address AS deliveryAddress,
+                        o.payment_method   AS paymentMethod,
+                        o.status           AS statusOrder,
+                        a.username         AS username
+                    FROM orders o
+                    JOIN accounts a ON o.account_id = a.account_id
+                    WHERE o.order_id = :orderId
+                """;
 
         return jdbi.withHandle(handle ->
                 handle.createQuery(sql)
@@ -157,12 +183,12 @@ public class OrdersDao extends BaseDao {
 
     public boolean updateOrder(Order order) {
         String sql = """
-            UPDATE orders
-            SET delivery_address = :deliveryAddress,
-                payment_method = :paymentMethod,
-                status = :status
-            WHERE order_id = :orderId
-        """;
+                    UPDATE orders
+                    SET delivery_address = :deliveryAddress,
+                        payment_method = :paymentMethod,
+                        status = :status
+                    WHERE order_id = :orderId
+                """;
 
         return jdbi.withHandle(handle ->
                 handle.createUpdate(sql)
@@ -178,11 +204,11 @@ public class OrdersDao extends BaseDao {
 
     public int getDiscountAmountFromVoucher(int orderId) {
         String sql = """
-            SELECT COALESCE(v.discount_amount, 0)
-            FROM orders o
-            LEFT JOIN vouchers v ON v.voucher_id = o.voucher_id
-            WHERE o.order_id = :orderId
-        """;
+                    SELECT COALESCE(v.discount_amount, 0)
+                    FROM orders o
+                    LEFT JOIN vouchers v ON v.voucher_id = o.voucher_id
+                    WHERE o.order_id = :orderId
+                """;
 
         return jdbi.withHandle(handle ->
                 handle.createQuery(sql)
@@ -236,14 +262,14 @@ public class OrdersDao extends BaseDao {
 
     public List<OrderDetail> getOrderDetailsByOrderId(int orderId) {
         String sql = """
-            SELECT
-                od.order_id,
-                od.product_id,
-                od.unit_price,
-                od.quantity
-            FROM order_details od
-            WHERE od.order_id = :orderId
-        """;
+                    SELECT
+                        od.order_id,
+                        od.product_id,
+                        od.unit_price,
+                        od.quantity
+                    FROM order_details od
+                    WHERE od.order_id = :orderId
+                """;
         return jdbi.withHandle(handle ->
                 handle.createQuery(sql)
                         .bind("orderId", orderId)
@@ -258,12 +284,13 @@ public class OrdersDao extends BaseDao {
                         .list()
         );
     }
+
     public Map<Integer, OrderStatus> getOrderStatusesByAccount(int accountId) {
         String sql = """
-        SELECT order_id, status
-        FROM orders
-        WHERE account_id = :accountId
-    """;
+                    SELECT order_id, status
+                    FROM orders
+                    WHERE account_id = :accountId
+                """;
 
         return jdbi.withHandle(handle ->
                 handle.createQuery(sql)
@@ -278,6 +305,47 @@ public class OrdersDao extends BaseDao {
                                 Map.Entry::getKey,
                                 Map.Entry::getValue
                         ))
+        );
+    }
+    public List<Order> getOrdersByAccountId(int accountId) {
+        String sql = """
+        SELECT
+            o.order_id AS orderId,
+            o.account_id AS accountId,
+            o.voucher_id AS voucherId,
+            o.order_date AS orderDate,
+            o.subtotal_amount AS subtotalAmount,
+            o.discount_amount AS discountAmount,
+            o.total_amount AS totalAmount,
+            o.delivery_address AS deliveryAddress,
+            o.payment_method AS paymentMethod,
+            o.status AS statusOrder
+        FROM orders o
+        WHERE o.account_id = :accountId
+        ORDER BY o.order_date DESC
+    """;
+
+        return jdbi.withHandle(handle ->
+                handle.createQuery(sql)
+                        .bind("accountId", accountId)
+                        .map((rs, ctx) -> {
+                            Order o = new Order();
+                            o.setOrderId(rs.getInt("orderId"));
+                            o.setAccountId(rs.getInt("accountId"));
+                            o.setVoucherId(rs.getInt("voucherId"));
+                            o.setOrderDate(rs.getTimestamp("orderDate"));
+                            o.setSubtotalAmount(rs.getInt("subtotalAmount"));
+                            o.setDiscountAmount(rs.getInt("discountAmount"));
+                            o.setTotalAmount(rs.getInt("totalAmount"));
+                            o.setDeliveryAddress(rs.getString("deliveryAddress"));
+
+                            String pm = rs.getString("paymentMethod");
+                            o.setPaymentMethod(pm == null ? PaymentMethod.COD : PaymentMethod.valueOf(pm.trim()));
+
+                            o.setStatusOrder(OrderStatus.fromDbValue(rs.getString("statusOrder")));
+                            return o;
+                        })
+                        .list()
         );
     }
 }

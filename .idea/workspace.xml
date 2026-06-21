@@ -10,10 +10,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="97a956ea-ffd1-4b74-beee-3c61e36dbf13" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/JSP_Servlet/src/main/webapp/admin_overview.jsp" beforeDir="false" afterPath="$PROJECT_DIR$/JSP_Servlet/src/main/webapp/admin_overview.jsp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/JSP_Servlet/src/main/webapp/css/admin_style.css" beforeDir="false" afterPath="$PROJECT_DIR$/JSP_Servlet/src/main/webapp/css/admin_style.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/JSP_Servlet/src/main/webapp/css/cartStyle.css" beforeDir="false" afterPath="$PROJECT_DIR$/JSP_Servlet/src/main/webapp/css/cartStyle.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/JSP_Servlet/src/main/java/vn/edu/nlu/fit/be/controller/BoughtProduct.java" beforeDir="false" afterPath="$PROJECT_DIR$/JSP_Servlet/src/main/java/vn/edu/nlu/fit/be/controller/BoughtProductController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/JSP_Servlet/src/main/java/vn/edu/nlu/fit/be/controller/OrderController.java" beforeDir="false" afterPath="$PROJECT_DIR$/JSP_Servlet/src/main/java/vn/edu/nlu/fit/be/controller/OrderController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/JSP_Servlet/src/main/java/vn/edu/nlu/fit/be/dao/OrdersDao.java" beforeDir="false" afterPath="$PROJECT_DIR$/JSP_Servlet/src/main/java/vn/edu/nlu/fit/be/dao/OrdersDao.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/JSP_Servlet/src/main/java/vn/edu/nlu/fit/be/model/Order.java" beforeDir="false" afterPath="$PROJECT_DIR$/JSP_Servlet/src/main/java/vn/edu/nlu/fit/be/model/Order.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/JSP_Servlet/src/main/java/vn/edu/nlu/fit/be/service/CheckoutSigningService.java" beforeDir="false" afterPath="$PROJECT_DIR$/JSP_Servlet/src/main/java/vn/edu/nlu/fit/be/service/CheckoutSigningService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/JSP_Servlet/src/main/java/vn/edu/nlu/fit/be/service/OrderSigningService.java" beforeDir="false" afterPath="$PROJECT_DIR$/JSP_Servlet/src/main/java/vn/edu/nlu/fit/be/service/OrderSigningService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/JSP_Servlet/src/main/java/vn/edu/nlu/fit/be/service/OrdersService.java" beforeDir="false" afterPath="$PROJECT_DIR$/JSP_Servlet/src/main/java/vn/edu/nlu/fit/be/service/OrdersService.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -55,6 +60,65 @@
   <component name="McpProjectServerCommands">
     <commands />
     <urls />
+  </component>
+  <component name="NextEditCompletionFeaturesState">
+    <decayedCancelled>
+      <entry key="MS100" value="8.070973918542484E-240" />
+      <entry key="MS500" value="1.5183964817093405E-48" />
+      <entry key="S2" value="1.1100596004054356E-12" />
+      <entry key="S5" value="1.652488777989642E-5" />
+      <entry key="S10" value="0.004065145745289624" />
+      <entry key="S30" value="0.18749984716630208" />
+      <entry key="S60" value="1.1257447543171324" />
+      <entry key="M2" value="4.344375935105454" />
+      <entry key="M5" value="10.71892050952932" />
+      <entry key="M10" value="14.638452132351095" />
+      <entry key="M15" value="16.461002153022545" />
+      <entry key="M30" value="20.8717985202717" />
+      <entry key="H1" value="29.070066909120456" />
+      <entry key="H2" value="38.51572775961857" />
+      <entry key="H4" value="45.90658133483675" />
+      <entry key="D1" value="54.090579776453616" />
+      <entry key="W1" value="55.721059961233195" />
+    </decayedCancelled>
+    <decayedSelected>
+      <entry key="MS100" value="1.0" />
+      <entry key="MS500" value="1.0" />
+      <entry key="S2" value="1.0000000448443043" />
+      <entry key="S5" value="1.00114996048229" />
+      <entry key="S10" value="1.0339110672537755" />
+      <entry key="S30" value="1.3236784750906188" />
+      <entry key="S60" value="1.56892747788327" />
+      <entry key="M2" value="1.75427281396274" />
+      <entry key="M5" value="1.89332889568567" />
+      <entry key="M10" value="1.9451607776911133" />
+      <entry key="M15" value="1.9630979548825103" />
+      <entry key="M30" value="1.981375542227597" />
+      <entry key="H1" value="1.9906440037811755" />
+      <entry key="H2" value="1.9953110085702734" />
+      <entry key="H4" value="1.9976527494926648" />
+      <entry key="D1" value="1.9996084084223034" />
+      <entry key="W1" value="1.9999440489553608" />
+    </decayedSelected>
+    <decayedShown>
+      <entry key="MS100" value="2.1723867196981034E-10" />
+      <entry key="MS500" value="0.011678509754960454" />
+      <entry key="S2" value="0.3287357154100867" />
+      <entry key="S5" value="0.6417559202091393" />
+      <entry key="S10" value="0.8348321825996768" />
+      <entry key="S30" value="1.4275135789738724" />
+      <entry key="S60" value="2.6468222829814945" />
+      <entry key="M2" value="6.071400715793461" />
+      <entry key="M5" value="12.599649490655384" />
+      <entry key="M10" value="16.57685953235008" />
+      <entry key="M15" value="18.41947566262044" />
+      <entry key="M30" value="22.850780160236855" />
+      <entry key="H1" value="31.059472845726667" />
+      <entry key="H2" value="40.510400173197276" />
+      <entry key="H4" value="47.903907548501465" />
+      <entry key="D1" value="56.09013245708433" />
+      <entry key="W1" value="57.72099601227557" />
+    </decayedShown>
   </component>
   <component name="ProjectColorInfo">{
   &quot;customColor&quot;: &quot;&quot;,
@@ -123,7 +187,6 @@
   </component>
   <component name="RunManager">
     <configuration name="Tomcat 10.1.55" type="#com.intellij.j2ee.web.tomcat.TomcatRunConfigurationFactory" factoryName="Local" APPLICATION_SERVER_NAME="Tomcat 10.1.55" ALTERNATIVE_JRE_ENABLED="false">
-      <option name="OPEN_IN_BROWSER_URL" value="http://localhost:8080/babyshop" />
       <option name="UPDATING_POLICY" value="restart-server" />
       <deployment>
         <artifact name="BE:war">
@@ -361,8 +424,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-jdk-30f59d01ecdd-2fc7cc6b9a17-intellij.indexing.shared.core-IU-253.31033.145" />
-        <option value="bundled-js-predefined-d6986cc7102b-9b0f141eb926-JavaScript-IU-253.31033.145" />
+        <option value="bundled-jdk-30f59d01ecdd-37e91769500f-intellij.indexing.shared.core-IU-261.25134.95" />
+        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-IU-261.25134.95" />
       </set>
     </attachedChunks>
   </component>
@@ -395,7 +458,10 @@
       <workItem from="1781514663117" duration="4098000" />
       <workItem from="1781538201449" duration="2162000" />
       <workItem from="1781610770332" duration="10831000" />
-      <workItem from="1781714244175" duration="1501000" />
+      <workItem from="1781714244175" duration="1584000" />
+      <workItem from="1781798913139" duration="2464000" />
+      <workItem from="1781839441203" duration="7619000" />
+      <workItem from="1782054394862" duration="3418000" />
     </task>
     <servers />
   </component>
