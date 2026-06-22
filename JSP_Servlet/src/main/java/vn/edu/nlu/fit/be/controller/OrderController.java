@@ -84,6 +84,12 @@ public class OrderController extends HttpServlet {
 
         Voucher voucher = voucherCode == null ? null : voucherService.findByCode(voucherCode);
         Integer voucherId = voucher == null ? null : voucher.getVoucherId();
+        int subtotalAmount = cart.getTotalPrice();
+
+        Integer sessionDiscount = (Integer) session.getAttribute("discountAmount");
+        int discountAmount = sessionDiscount == null ? 0 : Math.min(sessionDiscount, subtotalAmount);
+
+        int finalAmount = Math.max(0, subtotalAmount - discountAmount);
         int finalPrice = calculateFinalPrice(cart, session);
 
         try {
@@ -93,7 +99,9 @@ public class OrderController extends HttpServlet {
                     deliveryAddress,
                     paymentMethod,
                     voucherId,
-                    finalPrice
+                    subtotalAmount,
+                    discountAmount,
+                    finalAmount
             );
 
             setSigningSession(session, result);
@@ -170,6 +178,7 @@ public class OrderController extends HttpServlet {
         session.setAttribute("signOrderHash", result.getOrderHash());
         session.setAttribute("signingUrl", result.getSigningUrl());
         session.setAttribute("signToolUrl", result.getSignToolUrl());
+        session.setAttribute("hasActiveCert", result.isHasActiveCert());
 
         if (result.hasPrivateKeyUrl()) {
             session.setAttribute("privateKeyUrl", result.getPrivateKeyUrl());

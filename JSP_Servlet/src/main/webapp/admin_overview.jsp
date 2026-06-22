@@ -170,7 +170,35 @@
                                 <fmt:formatDate value="${o.orderDate}" pattern="dd/MM/yyyy"/>
                             </td>
                             <td>
-                                <span class="status ${o.statusOrder == 'Done' ? 'on' : 'off'}">
+                                <c:set var="statusClass" value="pending"/>
+
+                                <c:choose>
+                                    <c:when test="${o.statusOrder == 'Done' || o.statusOrder == 'DONE'}">
+                                        <c:set var="statusClass" value="done"/>
+                                    </c:when>
+
+                                    <c:when test="${o.statusOrder == 'Pending' || o.statusOrder == 'PENDING'}">
+                                        <c:set var="statusClass" value="pending"/>
+                                    </c:when>
+
+                                    <c:when test="${o.statusOrder == 'WAITING_SIGNATURE'}">
+                                        <c:set var="statusClass" value="waiting"/>
+                                    </c:when>
+
+                                    <c:when test="${o.statusOrder == 'VERIFIED'}">
+                                        <c:set var="statusClass" value="verified"/>
+                                    </c:when>
+
+                                    <c:when test="${o.statusOrder == 'CANCELLED'}">
+                                        <c:set var="statusClass" value="cancelled"/>
+                                    </c:when>
+
+                                    <c:when test="${o.statusOrder == 'TAMPERED' || o.statusOrder == 'SIGNATURE_INVALID' || o.statusOrder == 'CERTIFICATE_INVALID'}">
+                                        <c:set var="statusClass" value="invalid"/>
+                                    </c:when>
+                                </c:choose>
+
+                                <span class="status ${statusClass}">
                                         ${o.statusOrder}
                                 </span>
                             </td>

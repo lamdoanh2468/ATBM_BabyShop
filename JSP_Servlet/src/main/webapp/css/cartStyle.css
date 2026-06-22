@@ -1472,3 +1472,46 @@ iframe {
         grid-template-columns: 1fr;
     }
 }
+/* =========================
+   REMOVE GRADIENT COLORS
+   ========================= */
+
+.form-section {
+    background: #ffffff;
+}
+
+.checkout-form .summary-row.total {
+    background: #f0fdf4;
+}
+
+.checkout-form .submit-btn {
+    background: #16a34a;
+}
+
+.checkout-form .submit-btn:hover {
+    background: #15803d;
+}
+
+.voucher-section {
+    background: #ffffff;
+}
+
+.voucher-apply-btn {
+    background: #7545f2;
+}
+
+.voucher-apply-btn:hover {
+    background: #5f3dc4;
+}
+
+.voucher-applied {
+    background: #f0fdf4;
+}
+
+.voucher-code {
+    background: #16a34a;
+}
+
+.voucher-error {
+    background: #fef2f2;
+}

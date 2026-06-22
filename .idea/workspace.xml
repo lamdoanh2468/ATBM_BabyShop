@@ -10,8 +10,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="97a956ea-ffd1-4b74-beee-3c61e36dbf13" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/dataSources.local.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dataSources.local.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/JSP_Servlet/src/main/java/vn/edu/nlu/fit/be/controller/OrderSignController.java" beforeDir="false" afterPath="$PROJECT_DIR$/JSP_Servlet/src/main/java/vn/edu/nlu/fit/be/controller/OrderSignController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/JSP_Servlet/src/main/java/vn/edu/nlu/fit/be/controller/SignUploadController.java" beforeDir="false" afterPath="$PROJECT_DIR$/JSP_Servlet/src/main/java/vn/edu/nlu/fit/be/controller/SignUploadController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/JSP_Servlet/src/main/java/vn/edu/nlu/fit/be/dao/OrdersDao.java" beforeDir="false" afterPath="$PROJECT_DIR$/JSP_Servlet/src/main/java/vn/edu/nlu/fit/be/dao/OrdersDao.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/JSP_Servlet/src/main/java/vn/edu/nlu/fit/be/model/Order.java" beforeDir="false" afterPath="$PROJECT_DIR$/JSP_Servlet/src/main/java/vn/edu/nlu/fit/be/model/Order.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/JSP_Servlet/src/main/webapp/cart.jsp" beforeDir="false" afterPath="$PROJECT_DIR$/JSP_Servlet/src/main/webapp/cart.jsp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -19,8 +23,7 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="274" />
-    <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
+    <option name="cachedIndexableFilesCount" value="278" />
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -55,6 +58,65 @@
     <commands />
     <urls />
   </component>
+  <component name="NextEditCompletionFeaturesState">
+    <decayedCancelled>
+      <entry key="MS100" value="1.00000189463877" />
+      <entry key="MS500" value="1.0959453355439057" />
+      <entry key="S2" value="2.7039284759979036" />
+      <entry key="S5" value="5.539379393791489" />
+      <entry key="S10" value="7.883088140152341" />
+      <entry key="S30" value="10.353371219749054" />
+      <entry key="S60" value="11.13591904270467" />
+      <entry key="M2" value="11.562200838031702" />
+      <entry key="M5" value="13.454371719642499" />
+      <entry key="M10" value="23.504165848473868" />
+      <entry key="M15" value="34.73058666227871" />
+      <entry key="M30" value="58.771781305816475" />
+      <entry key="H1" value="83.81428901969454" />
+      <entry key="H2" value="106.1326441073041" />
+      <entry key="H4" value="122.59028092153743" />
+      <entry key="D1" value="140.73622392460857" />
+      <entry key="W1" value="144.37606690213636" />
+    </decayedCancelled>
+    <decayedSelected>
+      <entry key="MS100" value="0.0" />
+      <entry key="MS500" value="0.0" />
+      <entry key="S2" value="0.0" />
+      <entry key="S5" value="2.0103014214162967E-187" />
+      <entry key="S10" value="4.633020338751916E-94" />
+      <entry key="S30" value="1.0129224129070832E-31" />
+      <entry key="S60" value="4.3400997015423067E-16" />
+      <entry key="M2" value="2.9177330292295353E-8" />
+      <entry key="M5" value="0.0014642169516593038" />
+      <entry key="M10" value="0.05409351309670108" />
+      <entry key="M15" value="0.18019182882084442" />
+      <entry key="M30" value="0.6002931105467781" />
+      <entry key="H1" value="1.0957005525704697" />
+      <entry key="H2" value="1.4803340849756386" />
+      <entry key="H4" value="1.7206580375991978" />
+      <entry key="D1" value="1.9504764723680046" />
+      <entry key="W1" value="1.9928489550699413" />
+    </decayedSelected>
+    <decayedShown>
+      <entry key="MS100" value="2.113833128713965E-6" />
+      <entry key="MS500" value="0.11465138648731717" />
+      <entry key="S2" value="1.9798627577897574" />
+      <entry key="S5" value="5.03542153296598" />
+      <entry key="S10" value="7.543765533195194" />
+      <entry key="S30" value="10.208919771435001" />
+      <entry key="S60" value="11.058655287144498" />
+      <entry key="M2" value="11.522205615062843" />
+      <entry key="M5" value="13.439452787104463" />
+      <entry key="M10" value="23.549726216783625" />
+      <entry key="M15" value="34.90470656751936" />
+      <entry key="M30" value="59.36845138204147" />
+      <entry key="H1" value="84.90783057980005" />
+      <entry key="H2" value="107.61175666868199" />
+      <entry key="H4" value="124.31028130920167" />
+      <entry key="D1" value="142.686582931019" />
+      <entry key="W1" value="146.3688988627689" />
+    </decayedShown>
+  </component>
   <component name="ProjectColorInfo">{
   &quot;customColor&quot;: &quot;&quot;,
   &quot;associatedIndex&quot;: 8
@@ -77,7 +139,7 @@
     &quot;Tomcat Server.Tomcat 10.1.55.executor&quot;: &quot;Run&quot;,
     &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
     &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;mphuc&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;ldoanh&quot;,
     &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
     &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
     &quot;last_opened_file_path&quot;: &quot;F:/ATBM_BabyShop/JSP_Servlet/src/main/webapp/WEB-INF/downloads&quot;,
@@ -122,7 +184,6 @@
   </component>
   <component name="RunManager">
     <configuration name="Tomcat 10.1.55" type="#com.intellij.j2ee.web.tomcat.TomcatRunConfigurationFactory" factoryName="Local" APPLICATION_SERVER_NAME="Tomcat 10.1.55" ALTERNATIVE_JRE_ENABLED="false">
-      <option name="OPEN_IN_BROWSER_URL" value="http://localhost:8080/babyshop" />
       <option name="UPDATING_POLICY" value="restart-server" />
       <deployment>
         <artifact name="BE:war">
@@ -360,8 +421,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-jdk-30f59d01ecdd-2fc7cc6b9a17-intellij.indexing.shared.core-IU-253.31033.145" />
-        <option value="bundled-js-predefined-d6986cc7102b-9b0f141eb926-JavaScript-IU-253.31033.145" />
+        <option value="bundled-jdk-30f59d01ecdd-37e91769500f-intellij.indexing.shared.core-IU-261.25134.95" />
+        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-IU-261.25134.95" />
       </set>
     </attachedChunks>
   </component>
@@ -393,8 +454,12 @@
       <workItem from="1780817416974" duration="83000" />
       <workItem from="1781514663117" duration="4098000" />
       <workItem from="1781538201449" duration="2162000" />
-      <workItem from="1781610770332" duration="10678000" />
-      <workItem from="1781711975386" duration="47000" />
+      <workItem from="1781610770332" duration="10831000" />
+      <workItem from="1781714244175" duration="1584000" />
+      <workItem from="1781798913139" duration="2464000" />
+      <workItem from="1781839441203" duration="7619000" />
+      <workItem from="1782054394862" duration="5364000" />
+      <workItem from="1782092432978" duration="4310000" />
     </task>
     <servers />
   </component>
