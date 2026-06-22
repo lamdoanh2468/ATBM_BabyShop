@@ -91,6 +91,13 @@ public class OrderSignController extends HttpServlet {
         }
         Order order = ordersService.getById(orderId);
 
+        if (order == null) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, "Order not found");
+            return;
+        }
+
+
+
         if (order.getStatusOrder() != OrderStatus.WAITING_SIGNATURE) {
             response.sendRedirect(request.getContextPath() + "/bought-product");
             return;
