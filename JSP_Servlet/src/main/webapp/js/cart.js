@@ -448,3 +448,55 @@ function handleUploadSignatureFailure(orderId, data) {
         });
     });
 }
+async function updateCartQuantity(productId, quantity) {
+    const contextPath = typeof CONTEXT_PATH !== "undefined" ? CONTEXT_PATH : "";
+
+    const params = new URLSearchParams();
+    params.set("action", "update");
+    params.set("product_id", productId);
+    params.set("quantity", quantity);
+
+    const response = await fetch(`${contextPath}/cart?${params.toString()}`, {
+        method: "GET",
+        headers: {
+            "X-Requested-With": "XMLHttpRequest"
+        }
+    });
+
+    if (!response.ok) {
+        throw new Error("Không thể cập nhật số lượng giỏ hàng");
+    }
+}
+
+async function increaseUI(productId) {
+    const input = document.getElementById(`quantity-${productId}`);
+    if (!input) return;
+
+    const quantity = parseInt(input.value || "1", 10) + 1;
+    input.value = quantity;
+    updateCartTotalsUI();
+
+    try {
+        await updateCartQuantity(productId, quantity);
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+async function decreaseUI(productId) {
+    const input = document.getElementById(`quantity-${productId}`);
+    if (!input) return;
+
+    const cur = parseInt(input.value || "1", 10);
+    if (cur <= 1) return;
+
+    const quantity = cur - 1;
+    input.value = quantity;
+    updateCartTotalsUI();
+
+    try {
+        await updateCartQuantity(productId, quantity);
+    } catch (error) {
+        console.error(error);
+    }
+}

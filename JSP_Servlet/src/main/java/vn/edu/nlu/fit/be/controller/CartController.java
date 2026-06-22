@@ -66,6 +66,13 @@ public class CartController extends HttpServlet {
                         safeRedirect(response, request.getContextPath() + "/product-list");
                     }
                     return;
+                case "update":
+                    cart.updateItem(productId, quantity);
+                    session.setAttribute("cart", cart);
+
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"success\":true}");
+                    return;
 
                 case "remove":
                     cart.removeItem(productId);
