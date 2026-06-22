@@ -83,6 +83,8 @@ public class OrdersDao extends BaseDao {
                         o.account_id       AS accountId,
                         o.voucher_id       AS voucherId,
                         o.order_date       AS orderDate,
+                        o.subtotal_amount  AS subtotalAmount,
+                        o.discount_amount  AS discountAmount,
                         o.total_amount     AS totalAmount,
                         o.delivery_address AS deliveryAddress,
                         o.payment_method   AS paymentMethod,
@@ -104,6 +106,8 @@ public class OrdersDao extends BaseDao {
                             o.setDiscountAmount(rs.getInt("discountAmount"));
                             o.setTotalAmount(rs.getInt("totalAmount"));
                             o.setOrderDate(rs.getTimestamp("orderDate"));
+                            o.setSubtotalAmount(rs.getInt("subtotalAmount"));
+                            o.setDiscountAmount(rs.getInt("discountAmount"));
                             o.setTotalAmount(rs.getInt("totalAmount"));
                             o.setDeliveryAddress(rs.getString("deliveryAddress"));
                             String pm = rs.getString("paymentMethod");
@@ -125,6 +129,8 @@ public class OrdersDao extends BaseDao {
                         o.account_id       AS accountId,
                         o.voucher_id       AS voucherId,
                         o.order_date       AS orderDate,
+                        o.subtotal_amount  AS subtotalAmount,
+                        o.discount_amount  AS discountAmount,
                         o.total_amount     AS totalAmount,
                         o.delivery_address AS deliveryAddress,
                         o.payment_method   AS paymentMethod,
@@ -144,6 +150,8 @@ public class OrdersDao extends BaseDao {
                             o.setAccountId(rs.getInt("accountId"));
                             o.setVoucherId(rs.getInt("voucherId"));
                             o.setOrderDate(rs.getTimestamp("orderDate"));
+                            o.setSubtotalAmount(rs.getInt("subtotalAmount"));
+                            o.setDiscountAmount(rs.getInt("discountAmount"));
                             o.setTotalAmount(rs.getInt("totalAmount"));
                             o.setDeliveryAddress(rs.getString("deliveryAddress"));
                             String pm = rs.getString("paymentMethod");

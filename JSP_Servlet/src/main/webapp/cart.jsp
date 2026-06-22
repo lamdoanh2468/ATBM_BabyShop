@@ -651,7 +651,7 @@
                         hasNavigatedToSecurityKey = true;
                     });
                 }
-                
+
                 document.addEventListener("visibilitychange", function() {
                     if (document.visibilityState === 'visible' && hasNavigatedToSecurityKey) {
                         window.location.reload();
