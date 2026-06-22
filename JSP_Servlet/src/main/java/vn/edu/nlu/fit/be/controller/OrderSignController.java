@@ -100,8 +100,6 @@ public class OrderSignController extends HttpServlet {
             return;
         }
 
-
-        if (order.getStatusOrder() != OrderStatus.WAITING_SIGNATURE) {
         if (!canDownloadSigningPayload(order.getStatusOrder())) {
             response.sendRedirect(request.getContextPath() + "/bought-product");
             return;
@@ -147,6 +145,7 @@ public class OrderSignController extends HttpServlet {
             out.write(bytes);
         }
     }
+
     private boolean canDownloadSigningPayload(OrderStatus status) {
         return status == OrderStatus.WAITING_SIGNATURE
                 || status == OrderStatus.SIGNATURE_INVALID;
