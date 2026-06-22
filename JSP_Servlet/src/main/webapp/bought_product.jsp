@@ -226,7 +226,6 @@
                                     </div>
                                 </c:forEach>
                             </div>
-
                             <!-- Order Footer -->
                             <div class="bp-order-footer">
                                 <div class="bp-date">
@@ -234,36 +233,18 @@
                                     <span>Trạng thái đơn hàng: ${statusLabel}</span>
                                 </div>
                                 <div class="bp-total">
-                                    <c:set var="orderTotal" value="0"/>
-                                    <c:forEach items="${entry.value}" var="item">
-                                        <c:choose>
-                                            <c:when test="${not empty item.product}">
-                                                <c:set var="orderTotal"
-                                                       value="${orderTotal + (item.product.productPrice * item.quantity)}"/>
-                                            </c:when>
-                                            <c:otherwise>
-                                                <c:set var="orderTotal"
-                                                       value="${orderTotal + (item.unitPrice * item.quantity)}"/>
-                                            </c:otherwise>
-                                        </c:choose>
-                                    </c:forEach>
+                                    <c:set var="order" value="${ORDERS[entry.key]}"/>
 
-                                    <c:set var="discount" value="${DISCOUNTS[entry.key]}"/>
-                                    <c:if test="${empty discount}">
-                                        <c:set var="discount" value="0"/>
-                                    </c:if>
-
-                                    <c:set var="finalTotal" value="${orderTotal - discount}"/>
-                                    <c:if test="${finalTotal < 0}">
-                                        <c:set var="finalTotal" value="0"/>
-                                    </c:if>
+                                    <c:set var="subtotal" value="${order.subtotalAmount}"/>
+                                    <c:set var="discount" value="${order.discountAmount}"/>
+                                    <c:set var="finalTotal" value="${order.totalAmount}"/>
 
                                     <div style="display:flex; flex-direction:column; gap:6px; align-items:flex-end;">
                                         <div style="font-size:13px; color:#64748b;">
                                             Tổng tiền:
                                             <b>
                                                 <fmt:setLocale value="vi_VN"/>
-                                                <fmt:formatNumber value="${orderTotal}" type="number"
+                                                <fmt:formatNumber value="${subtotal}" type="number"
                                                                   groupingUsed="true"/>đ
                                             </b>
                                         </div>
@@ -279,9 +260,8 @@
                                         <div style="font-size:16px; font-weight:800; color:#0f172a;">
                                             Thành tiền:
                                             <span class="bp-total-amount">
-                                                   <fmt:formatNumber value="${finalTotal}" type="number"
-                                                                     groupingUsed="true"/>đ
-                                            </span>
+                                <fmt:formatNumber value="${finalTotal}" type="number" groupingUsed="true"/>đ
+                     </span>
                                         </div>
                                     </div>
                                 </div>

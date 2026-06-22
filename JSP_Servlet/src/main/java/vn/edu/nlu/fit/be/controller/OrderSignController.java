@@ -91,6 +91,15 @@ public class OrderSignController extends HttpServlet {
         }
         Order order = ordersService.getById(orderId);
 
+        if (order == null) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, "Order not found");
+            return;
+        }
+        if (order.getAccountId() != account.getAccountId()) {
+            response.sendRedirect(request.getContextPath() + "/error/403.jsp");
+            return;
+        }
+
         if (!canDownloadSigningPayload(order.getStatusOrder())) {
             response.sendRedirect(request.getContextPath() + "/bought-product");
             return;
@@ -136,6 +145,7 @@ public class OrderSignController extends HttpServlet {
             out.write(bytes);
         }
     }
+
     private boolean canDownloadSigningPayload(OrderStatus status) {
         return status == OrderStatus.WAITING_SIGNATURE
                 || status == OrderStatus.SIGNATURE_INVALID;
