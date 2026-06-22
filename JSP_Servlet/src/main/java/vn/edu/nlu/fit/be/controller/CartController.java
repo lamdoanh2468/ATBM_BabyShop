@@ -5,6 +5,7 @@ import jakarta.servlet.http.*;
 import jakarta.servlet.annotation.*;
 import vn.edu.nlu.fit.be.model.Account;
 import vn.edu.nlu.fit.be.model.Cart;
+import vn.edu.nlu.fit.be.model.CartItem.CartItem;
 import vn.edu.nlu.fit.be.model.Product;
 import vn.edu.nlu.fit.be.model.Voucher;
 import vn.edu.nlu.fit.be.service.ProductService;
@@ -67,13 +68,16 @@ public class CartController extends HttpServlet {
                     }
                     return;
                 case "update":
-                    cart.updateItem(productId, quantity);
-                    session.setAttribute("cart", cart);
-
+                    boolean updated = cart.updateItem(productId, quantity);
                     response.setContentType("application/json;charset=UTF-8");
+                    if (!updated) {
+                        response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                        response.getWriter().write("{\"success\":false,\"message\":\"Sản phẩm không có trong giỏ hàng\"}");
+                        return;
+                    }
+                    session.setAttribute("cart", cart);
                     response.getWriter().write("{\"success\":true}");
                     return;
-
                 case "remove":
                     cart.removeItem(productId);
                     session.setAttribute("cart", cart);

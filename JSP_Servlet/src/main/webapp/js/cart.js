@@ -25,19 +25,54 @@ function updateCartTotalsUI() {
     if (totalEl) totalEl.textContent = total.toLocaleString("vi-VN") + "đ";
 }
 
-function increaseUI(productId) {
+async function increaseUI(productId) {
     const input = document.getElementById(`quantity-${productId}`);
     if (!input) return;
-    input.value = (parseInt(input.value || "1", 10) + 1);
+
+    const oldQuantity = parseInt(input.value || "1", 10);
+    const newQuantity = oldQuantity + 1;
+
+    input.value = newQuantity;
     updateCartTotalsUI();
+
+    try {
+        await updateCartQuantity(productId, newQuantity);
+    } catch (error) {
+        input.value = oldQuantity;
+        updateCartTotalsUI();
+
+        Swal.fire({
+            icon: "error",
+            title: "Không thể cập nhật giỏ hàng",
+            text: error.message || "Vui lòng thử lại."
+        });
+    }
 }
 
-function decreaseUI(productId) {
+async function decreaseUI(productId) {
     const input = document.getElementById(`quantity-${productId}`);
     if (!input) return;
-    const cur = parseInt(input.value || "1", 10);
-    if (cur > 1) input.value = cur - 1;
+
+    const oldQuantity = parseInt(input.value || "1", 10);
+    if (oldQuantity <= 1) return;
+
+    const newQuantity = oldQuantity - 1;
+
+    input.value = newQuantity;
     updateCartTotalsUI();
+
+    try {
+        await updateCartQuantity(productId, newQuantity);
+    } catch (error) {
+        input.value = oldQuantity;
+        updateCartTotalsUI();
+
+        Swal.fire({
+            icon: "error",
+            title: "Không thể cập nhật giỏ hàng",
+            text: error.message || "Vui lòng thử lại."
+        });
+    }
 }
 
 document.addEventListener("DOMContentLoaded", updateCartTotalsUI);
@@ -487,6 +522,21 @@ async function waitForCartUpdates() {
     }
 
     await Promise.allSettled(Array.from(pendingCartUpdates.values()));
+}
+async function syncAllCartQuantitiesFromUI() {
+    const inputs = document.querySelectorAll(".quantity-input");
+
+    for (const input of inputs) {
+        const id = input.id || "";
+        const productId = id.replace("quantity-", "");
+        const quantity = parseInt(input.value || "1", 10);
+
+        if (!productId || Number.isNaN(quantity)) {
+            continue;
+        }
+
+        await updateCartQuantity(productId, Math.max(1, quantity));
+    }
 }
 
 
