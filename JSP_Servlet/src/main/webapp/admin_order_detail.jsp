@@ -15,16 +15,23 @@
 <div class="dashboard">
     <aside class="sidebar">
         <nav class="menu">
-            <a href="${pageContext.request.contextPath}/admin/overview"><i class="fa-solid fa-house"></i><span>Dashboard</span></a>
-            <a href="${pageContext.request.contextPath}/admin/accounts"><i class="fa-solid fa-user"></i><span>Tài khoản</span></a>
-            <a href="${pageContext.request.contextPath}/admin/orders" class="active"><i class="fa-solid fa-box"></i><span>Đơn hàng</span></a>
-            <a href="${pageContext.request.contextPath}/admin/products"><i class="fa-solid fa-cubes"></i><span>Sản phẩm</span></a>
+            <a href="${pageContext.request.contextPath}/admin/overview"><i
+                    class="fa-solid fa-house"></i><span>Dashboard</span></a>
+            <a href="${pageContext.request.contextPath}/admin/accounts"><i
+                    class="fa-solid fa-user"></i><span>Tài khoản</span></a>
+            <a href="${pageContext.request.contextPath}/admin/orders" class="active"><i
+                    class="fa-solid fa-box"></i><span>Đơn hàng</span></a>
+            <a href="${pageContext.request.contextPath}/admin/products"><i
+                    class="fa-solid fa-cubes"></i><span>Sản phẩm</span></a>
             <a href="${pageContext.request.contextPath}/admin/categories"><i class="fa-solid fa-layer-group"></i><span>Danh mục sản phẩm</span></a>
-            <a href="${pageContext.request.contextPath}/admin/brands"><i class="fa-solid fa-tags"></i><span>Thương hiệu</span></a>
+            <a href="${pageContext.request.contextPath}/admin/brands"><i
+                    class="fa-solid fa-tags"></i><span>Thương hiệu</span></a>
             <a href="${pageContext.request.contextPath}/admin/contacts"><i class="fa-solid fa-envelope"></i><span>Liên hệ</span></a>
             <a href="${pageContext.request.contextPath}/admin/stocks"><i class="fa-solid fa-warehouse"></i><span>Kho hàng</span></a>
-            <a href="${pageContext.request.contextPath}/admin/vouchers"><i class="fa-solid fa-ticket"></i><span>Vouchers</span></a>
-            <a href="${pageContext.request.contextPath}/admin/settings"><i class="fa-solid fa-gear"></i><span>Cài đặt</span></a>
+            <a href="${pageContext.request.contextPath}/admin/vouchers"><i
+                    class="fa-solid fa-ticket"></i><span>Vouchers</span></a>
+            <a href="${pageContext.request.contextPath}/admin/settings"><i
+                    class="fa-solid fa-gear"></i><span>Cài đặt</span></a>
         </nav>
     </aside>
 
@@ -32,14 +39,13 @@
         <div class="product-form-shell">
             <div class="product-form-hero">
                 <div class="product-form-copy">
-                    <span class="product-form-eyebrow">Order Detail</span>
                     <h2>Chi tiết đơn hàng #${order.orderId}</h2>
                     <p>Xem thông tin khách hàng, trạng thái đơn và toàn bộ sản phẩm thuộc đơn hàng này.</p>
                 </div>
 
                 <a href="${pageContext.request.contextPath}/admin/orders" class="product-back-link">
                     <i class="fa-solid fa-arrow-left"></i>
-                    <span>Quay lại danh sách</span>
+                    <span>Quay lại</span>
                 </a>
             </div>
 
@@ -50,11 +56,6 @@
                             <h3>Thông tin đơn hàng</h3>
                             <p>Thông tin này được lấy trực tiếp từ hệ thống tại thời điểm hiện tại.</p>
                         </div>
-                        <a href="${pageContext.request.contextPath}/admin/orders/edit?id=${order.orderId}"
-                           class="product-back-link">
-                            <i class="fa-solid fa-pen"></i>
-                            <span>Sửa đơn hàng</span>
-                        </a>
                     </div>
 
                     <div class="product-preview-meta" style="margin-bottom:20px;">
@@ -71,14 +72,43 @@
                             <strong>${order.paymentMethod}</strong>
                         </div>
                         <div>
-                            <span>Trạng thái</span>
-                            <strong>${order.statusOrder}</strong>
+                            <span>Địa chỉ giao hàng</span>
+                            <strong>${order.deliveryAddress}</strong>
                         </div>
-                    </div>
+                        <div>
+                            <span>Trạng thái</span>
 
-                    <div class="voucher-form" style="padding:18px;margin-top:0;">
-                        <h3 style="margin-bottom:10px;">Địa chỉ giao hàng</h3>
-                        <p style="color:#5f5c82;line-height:1.6;">${order.deliveryAddress}</p>
+                            <select class="status-select ${order.statusOrder}"
+                                    data-id="${order.orderId}"
+                                    data-previous="${order.statusOrder}"
+                                    onchange="updateStatus(this)"
+                            ${order.statusOrder eq 'CANCELLED' || order.statusOrder eq 'DONE' ? 'disabled' : ''}>
+
+                                <option value="WAITING_SIGNATURE" ${order.statusOrder eq 'WAITING_SIGNATURE' ? 'selected' : ''}>
+                                    Chờ ký
+                                </option>
+
+                                <option value="SIGNATURE_INVALID" ${order.statusOrder eq 'SIGNATURE_INVALID' ? 'selected' : ''}>
+                                    Chữ ký điện tử không hợp lệ
+                                </option>
+
+                                <option value="TAMPERED" ${order.statusOrder eq 'TAMPERED' ? 'selected' : ''}>
+                                    Chữ ký điện tử bị sửa đổi
+                                </option>
+
+                                <option value="VERIFIED" ${order.statusOrder eq 'VERIFIED' ? 'selected' : ''}>
+                                    Chữ ký điện tử hợp lệ
+                                </option>
+
+                                <option value="DONE" ${order.statusOrder eq 'DONE' ? 'selected' : ''}>
+                                    Xác nhận thành công
+                                </option>
+
+                                <option value="CANCELLED" ${order.statusOrder eq 'CANCELLED' ? 'selected' : ''}>
+                                    Đã hủy
+                                </option>
+                            </select>
+                        </div>
                     </div>
 
                     <section class="voucher-list">
@@ -86,8 +116,9 @@
                         <table class="data-table">
                             <thead>
                             <tr>
-                                <th>Sản phẩm</th>
+                                <th>Mã sản phẩm</th>
                                 <th>Tên</th>
+                                <th>Hình ảnh</th>
                                 <th>Đơn giá</th>
                                 <th>Số lượng</th>
                                 <th>Thành tiền</th>
@@ -96,15 +127,19 @@
                             <tbody>
                             <c:forEach var="detail" items="${orderDetails}">
                                 <tr>
+                                    <td>${detail.productId}</td>
+                                    <td>${detail.product.productName}</td>
                                     <td>
                                         <c:if test="${detail.product != null && not empty detail.product.productImage}">
-                                            <img src="${detail.product.productImage}" class="product-img" alt="product"/>
+                                            <img src="${detail.product.productImage}" class="product-img"
+                                                 alt="product"/>
                                         </c:if>
                                     </td>
-                                    <td>${detail.product != null ? detail.product.productName : detail.productId}</td>
                                     <td><fmt:formatNumber value="${detail.unitPrice}" type="number"/>đ</td>
                                     <td>${detail.quantity}</td>
-                                    <td><fmt:formatNumber value="${detail.unitPrice * detail.quantity}" type="number"/>đ</td>
+                                    <td><fmt:formatNumber value="${detail.unitPrice * detail.quantity}"
+                                                          type="number"/>đ
+                                    </td>
                                 </tr>
                             </c:forEach>
                             </tbody>
@@ -140,4 +175,90 @@
     </main>
 </div>
 </body>
+<script>
+    async function updateStatus(select) {
+        const id = select.getAttribute('data-id');
+        const status = select.value;
+        const previousValue = select.getAttribute('data-previous') || 'WAITING_SIGNATURE';
+
+        if (status === 'CANCELLED') {
+            const result = await Swal.fire({
+                icon: 'warning',
+                title: 'Bạn chắc chắn muốn huỷ đơn hàng này không?',
+                text: 'Hành động này sẽ không được hoàn tác.',
+                showCancelButton: true,
+                confirmButtonText: 'Đồng ý huỷ',
+                cancelButtonText: 'Không',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                reverseButtons: true
+            });
+
+            if (!result.isConfirmed) {
+                select.value = previousValue;
+                return;
+            }
+        }
+
+        const url = '${pageContext.request.contextPath}/admin/orders/status?id='
+            + encodeURIComponent(id)
+            + '&status='
+            + encodeURIComponent(status);
+
+        fetch(url)
+            .then(function (res) {
+                return res.text();
+            })
+            .then(function (txt) {
+                if (txt === 'OK') {
+                    select.setAttribute('data-previous', status);
+                    select.className = 'status-select ' + status;
+
+                    if (status === 'CANCELLED' || status === 'DONE') {
+                        select.disabled = true;
+                    }
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Cập nhật thành công',
+                        timer: 1200,
+                        showConfirmButton: false
+                    });
+
+                } else if (txt === 'PARTIAL') {
+                    select.setAttribute('data-previous', status);
+                    select.className = 'status-select ' + status;
+
+                    if (status === 'CANCELLED' || status === 'DONE') {
+                        select.disabled = true;
+                    }
+
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Trạng thái đã cập nhật',
+                        text: 'Nhưng có lỗi khi xử lý kho hàng.'
+                    });
+
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Cập nhật thất bại',
+                        text: txt
+                    });
+
+                    select.value = previousValue;
+                }
+            })
+            .catch(function (err) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Lỗi kết nối',
+                    text: String(err)
+                });
+
+                select.value = previousValue;
+            });
+    }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </html>

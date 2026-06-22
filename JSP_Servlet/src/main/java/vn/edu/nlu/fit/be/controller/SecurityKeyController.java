@@ -22,6 +22,7 @@ import java.util.Map;
         "/security-key/revoke",
         "/security-key/lost-key",
         "/security-key/reissue",
+        "/security-key/status",
         "/security-key/download-private-key"
 })
 public class SecurityKeyController extends HttpServlet {
@@ -34,7 +35,13 @@ public class SecurityKeyController extends HttpServlet {
             throws ServletException, IOException {
         HttpSession session = request.getSession(false);
         if (session == null || session.getAttribute("USER") == null) {
-            response.sendRedirect(request.getContextPath() + "/login");
+            if (isAjax(request)) {
+                writeJson(response, HttpServletResponse.SC_UNAUTHORIZED, Map.of(
+                        "success", false,
+                        "message", "Bạn cần đăng nhập lại"));
+            } else {
+                response.sendRedirect(request.getContextPath() + "/login");
+            }
             return;
         }
 
@@ -43,6 +50,11 @@ public class SecurityKeyController extends HttpServlet {
 
         if ("/security-key/download-private-key".equals(path)) {
             downloadPrivateKey(request, response, account);
+            return;
+        }
+
+        if ("/security-key/status".equals(path)) {
+            writeSecurityKeyStatus(request, response, account);
             return;
         }
 
@@ -151,6 +163,40 @@ public class SecurityKeyController extends HttpServlet {
         }
     }
 
+    private void writeSecurityKeyStatus(HttpServletRequest request,
+                                        HttpServletResponse response,
+                                        Account account) throws IOException {
+        try {
+            boolean hasActiveCert = certificateService
+                    .getActiveCertByAccountId(account.getAccountId())
+                    .isPresent();
+            boolean hasPendingPrivateKey = certificateService.hasPendingPrivateKey(account.getAccountId());
+
+            if (!hasPendingPrivateKey) {
+                HttpSession session = request.getSession(false);
+                if (session != null) {
+                    session.removeAttribute("privateKeyUrl");
+                    session.setAttribute("hasActiveCert", hasActiveCert);
+                }
+            }
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("hasActiveCert", hasActiveCert);
+            result.put("hasPendingPrivateKey", hasPendingPrivateKey);
+            result.put("privateKeyDownloaded", hasActiveCert && !hasPendingPrivateKey);
+            result.put("privateKeyUrl", hasPendingPrivateKey
+                    ? request.getContextPath() + "/security-key/download-private-key"
+                    : "");
+
+            writeJson(response, HttpServletResponse.SC_OK, result);
+        } catch (Exception e) {
+            writeJson(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, Map.of(
+                    "success", false,
+                    "message", "Không thể kiểm tra trạng thái private key: " + e.getMessage()));
+        }
+    }
+
     private void downloadPrivateKey(HttpServletRequest request,
                                     HttpServletResponse response,
                                     Account account) throws IOException {
@@ -178,6 +224,8 @@ public class SecurityKeyController extends HttpServlet {
             result.put("message", "Đã cấp lại private key mới. Vui lòng tải và lưu ở nơi an toàn.");
             result.put("privateKeyUrl", request.getContextPath() + "/security-key/download-private-key");
             result.put("signToolUrl", request.getContextPath() + "/signing-tool/download");
+            result.put("hasActiveCert", true);
+            result.put("hasPendingPrivateKey", true);
 
             writeJson(response, HttpServletResponse.SC_OK, result);
         } else {

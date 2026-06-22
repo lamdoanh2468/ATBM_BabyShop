@@ -19,7 +19,8 @@ import java.util.List;
 
 @WebServlet(urlPatterns = {
         "/admin/orders",
-        "/admin/orders/status"
+        "/admin/orders/status",
+        "/admin/orders/detail"
 })
 public class AdminOrderController extends HttpServlet {
 
@@ -68,9 +69,18 @@ public class AdminOrderController extends HttpServlet {
                     List<OrderDetail> details = orderDetailDao.getOrderDetailsByOrderId(id);
 
                     if (newStatus == OrderStatus.DONE) {
-                        // Khi Done: cập nhật sold_quantity cho từng sản phẩm
                         for (OrderDetail detail : details) {
-                            if (!stockService.updateSoldQuantity(detail.getProductId(), detail.getQuantity())) {
+                            boolean stockReserved = stockService.updateStockProduct(
+                                    detail.getProductId(),
+                                    detail.getQuantity()
+                            );
+
+                            boolean soldUpdated = stockService.updateSoldQuantity(
+                                    detail.getProductId(),
+                                    detail.getQuantity()
+                            );
+
+                            if (!stockReserved || !soldUpdated) {
                                 stockUpdated = false;
                             }
                         }
@@ -97,6 +107,27 @@ public class AdminOrderController extends HttpServlet {
             } catch (Exception e) {
                 resp.setContentType("text/plain");
                 resp.getWriter().write("FAIL: " + e.getMessage());
+            }
+            return;
+        }
+        if (path.equals("/admin/orders/detail")) {
+            try {
+                int id = Integer.parseInt(req.getParameter("id"));
+
+                Order order = service.getById(id);
+                if (order == null) {
+                    resp.sendRedirect(req.getContextPath() + "/admin/orders");
+                    return;
+                }
+
+                List<OrderDetail> orderDetails = orderDetailDao.getOrderDetailsByOrderId(id);
+
+                req.setAttribute("order", order);
+                req.setAttribute("orderDetails", orderDetails);
+
+                req.getRequestDispatcher("/admin_order_detail.jsp").forward(req, resp);
+            } catch (Exception e) {
+                resp.sendRedirect(req.getContextPath() + "/admin/orders");
             }
             return;
         }

@@ -1,13 +1,13 @@
 package vn.edu.nlu.fit.be.service;
 
-import java.util.List;
-
 import vn.edu.nlu.fit.be.dto.CheckoutSignResult;
 import vn.edu.nlu.fit.be.dto.OrderToSignRes;
 import vn.edu.nlu.fit.be.model.Account;
 import vn.edu.nlu.fit.be.model.Cart;
 import vn.edu.nlu.fit.be.model.CartItem.CartItem;
 import vn.edu.nlu.fit.be.model.PaymentMethod;
+
+import java.util.List;
 
 public class CheckoutSigningService {
 
@@ -21,11 +21,12 @@ public class CheckoutSigningService {
     private final OrderSigningService orderSigningService = new OrderSigningService();
 
     public CheckoutSignResult checkoutAndPrepareSigning(Account account,
-                                                         Cart cart,
-                                                         String deliveryAddress,
-                                                         PaymentMethod paymentMethod,
-                                                         Integer voucherId,
-                                                         int finalPrice) throws Exception {
+                                                        Cart cart,
+                                                        String deliveryAddress,
+                                                        PaymentMethod paymentMethod,
+                                                        Integer voucherId, int subtotalAmount,
+                                                        int discountAmount,
+                                                        int finalPrice) throws Exception {
         validateInput(account, cart, deliveryAddress);
         ensureStockAvailable(cart);
 
@@ -38,6 +39,8 @@ public class CheckoutSigningService {
                 deliveryAddress,
                 paymentMethod,
                 voucherId,
+                subtotalAmount,
+                discountAmount,
                 finalPrice
         );
 

@@ -651,7 +651,7 @@
                         hasNavigatedToSecurityKey = true;
                     });
                 }
-                
+
                 document.addEventListener("visibilitychange", function() {
                     if (document.visibilityState === 'visible' && hasNavigatedToSecurityKey) {
                         window.location.reload();
@@ -871,7 +871,7 @@
         const contentType = response.headers.get("content-type") || "";
 
         if (!contentType.includes("application/json")) {
-            throw new Error("Server không trả JSON. Hãy kiểm tra lại.");
+            throw new Error("Server không đọc được file JSON. Hãy kiểm tra lại.");
         }
 
         const data = await response.json();

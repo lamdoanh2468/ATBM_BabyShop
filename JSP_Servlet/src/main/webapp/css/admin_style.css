@@ -23,12 +23,6 @@ body {
     flex-direction: column;
     border-right: 2px solid rgba(255,255,255,0.4);
 }
-
-@keyframes gradientMove {
-    0% { background-position: 0%; }
-    50% { background-position: 100%; }
-    100% { background-position: 0%; }
-}
 .sidebar .menu a {
     display: flex;
     align-items: center;
@@ -138,7 +132,7 @@ body {
 .card-info .value {
     font-size: 32px;
     font-weight: 600;
-    color: #77f12e;
+    color: #00c9a7;
 }
 
 .icon {
@@ -218,6 +212,23 @@ body {
 }
 
 .status.off {
+    background: #FFF4F4;
+    color: #FF6B6B;
+}
+.status.done,
+.status.verified {
+    background: #E9FAEF;
+    color: #2ECC71;
+}
+
+.status.pending,
+.status.waiting {
+    background: #FFF6D9;
+    color: #C79300;
+}
+
+.status.cancelled,
+.status.invalid {
     background: #FFF4F4;
     color: #FF6B6B;
 }
@@ -1000,3 +1011,97 @@ body {
 }
 
 
+:root {
+    --baby-blue: #2c73d2;
+    --baby-blue-hover: #0081cf;
+    --baby-bg: #F7F8FF;
+    --baby-border: #E6E9F2;
+}
+
+/* Nền tổng giống ảnh */
+body {
+    background: var(--baby-bg);
+}
+
+/* Thay gradient sidebar bằng xanh đặc giống thanh top trong ảnh */
+.sidebar {
+    background: var(--baby-blue);
+    background-size: auto;
+    animation: none;
+    border-right: 1px solid var(--baby-border);
+}
+
+/* Menu trong sidebar cho hợp với nền xanh */
+.sidebar .menu a {
+    background: rgba(255, 255, 255, 0.14);
+    color: #ffffff;
+    backdrop-filter: none;
+}
+
+.sidebar .menu a:hover,
+.sidebar .menu a.active {
+    background: #ffffff;
+    color: var(--baby-blue);
+    box-shadow: 0 4px 12px rgba(0, 49, 218, 0.22);
+}
+
+.bottom-btn {
+    background: rgba(255, 255, 255, 0.14);
+    color: #ffffff;
+}
+
+.bottom-btn:hover {
+    background: #ffffff;
+    color: var(--baby-blue);
+}
+
+/* Thay gradient button thành xanh đặc */
+.btn-primary,
+.settings-container .btn-primary,
+.btn-add {
+    background: var(--baby-blue) !important;
+    color: #ffffff;
+}
+
+.btn-primary:hover,
+.btn-add:hover {
+    background: var(--baby-blue-hover) !important;
+    box-shadow: 0 6px 16px rgba(0, 49, 218, 0.25);
+}
+
+/* Thay các nền gradient pastel thành trắng/xám giống ảnh */
+.product-form-hero {
+    background: var(--baby-bg);
+    border: 1px solid var(--baby-border);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.05);
+}
+
+.product-preview-media {
+    background: var(--baby-bg);
+}
+/* Thêm khoảng cách giữa các item menu */
+.sidebar .menu {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Menu mặc định không còn nền mờ */
+.sidebar .menu a {
+    background: transparent;
+    color: #b0a8b9;
+    backdrop-filter: none;
+    border-radius: 12px;
+}
+
+/* Chỉ hover hoặc active mới hiện nền */
+.sidebar .menu a:hover,
+.sidebar .menu a.active {
+    background: var(--baby-blue);
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(0, 49, 218, 0.18);
+}
+
+.sidebar .menu a i {
+    color: inherit;
+}

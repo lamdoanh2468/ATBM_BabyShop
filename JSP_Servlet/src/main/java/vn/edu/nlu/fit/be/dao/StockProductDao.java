@@ -13,7 +13,7 @@ public class StockProductDao extends BaseDao {
 
     public boolean checkAvailable(int productId) {
         String sql = """
-                    SELECT SUM(total_quantity)
+                    SELECT COALESCE(SUM(total_quantity), 0)
                     FROM stock_products
                     WHERE product_id = :pid
                 """;
@@ -105,13 +105,6 @@ public class StockProductDao extends BaseDao {
         );
     }
 
-    public int getTotalSoldQuantity(int stockProductId) {
-        return jdbi.withHandle(handle -> handle.createQuery("SELECT SUM(sold_quantity) FROM stock_products WHERE stock_product_id = :id").bind("id", stockProductId).mapTo(Integer.class).findOne().orElse(0));
-    }
-
-    public int getTotalImportedByProductId(int productId) {
-        return jdbi.withHandle(handle -> handle.createQuery("SELECT SUM(total_quantity) FROM stock_products WHERE product_id = :id").bind("id", productId).mapTo(Integer.class).findOne().orElse(null));
-    }
     public boolean confirmOrder(int productId, int stockId, int qty) {
         String sql = """
         UPDATE stock_products

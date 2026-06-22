@@ -2,10 +2,7 @@ package vn.edu.nlu.fit.be.service;
 
 import vn.edu.nlu.fit.be.dao.OrderSignDao;
 import vn.edu.nlu.fit.be.dto.OrderToSignRes;
-import vn.edu.nlu.fit.be.model.Order;
-import vn.edu.nlu.fit.be.model.OrderDetail;
-import vn.edu.nlu.fit.be.model.OrderSign;
-import vn.edu.nlu.fit.be.model.Certificate;
+import vn.edu.nlu.fit.be.model.*;
 
 import java.security.MessageDigest;
 import java.util.Comparator;
@@ -15,8 +12,6 @@ import java.util.List;
 public class OrderSigningService {
 
     private static final String HASH_ALGORITHM = "SHA-256";
-    private static final String WAITING_SIGNATURE = "WAITING_SIGNATURE";
-
     private final OrdersService ordersService = new OrdersService();
     private final CertificateService certificateService = new CertificateService();
     private final OrderSignDao orderSignDao = new OrderSignDao();
@@ -35,7 +30,7 @@ public class OrderSigningService {
         sign.setSnapshotJson(snapshot);
         sign.setOrderHash(hash);
         sign.setHashAlgorithm(HASH_ALGORITHM);
-        sign.setStatus(WAITING_SIGNATURE);
+        sign.setStatus(OrderStatus.WAITING_SIGNATURE.name());
 
         orderSignDao.insert(sign);
 
@@ -121,15 +116,24 @@ public class OrderSigningService {
 
     private String buildSnapshot(Order order, List<OrderDetail> orderDetails) {
         StringBuilder sb = new StringBuilder();
+
         sb.append("orderId=").append(order.getOrderId()).append(";");
         sb.append("accountId=").append(order.getAccountId()).append(";");
         sb.append("voucherId=").append(order.getVoucherId()).append(";");
+        sb.append("subtotal=").append(order.getSubtotalAmount()).append(";");
+        sb.append("discountAmount=").append(order.getDiscountAmount()).append(";");
         sb.append("total=").append(order.getTotalAmount()).append(";");
         sb.append("paymentMethod=").append(order.getPaymentMethod()).append(";");
         sb.append("address=").append(nullToEmpty(order.getDeliveryAddress())).append(";");
         sb.append("details=[");
 
-        orderDetails.stream().sorted(Comparator.comparingInt(OrderDetail::getProductId)).forEach(detail -> sb.append("{").append("productId=").append(detail.getProductId()).append(";").append("quantity=").append(detail.getQuantity()).append(";").append("price=").append(detail.getUnitPrice()).append(";").append("}"));
+        orderDetails.stream()
+                .sorted(Comparator.comparingInt(OrderDetail::getProductId))
+                .forEach(detail -> sb.append("{")
+                        .append("productId=").append(detail.getProductId()).append(";")
+                        .append("quantity=").append(detail.getQuantity()).append(";")
+                        .append("price=").append(detail.getUnitPrice()).append(";")
+                        .append("}"));
 
         sb.append("]");
         return sb.toString();
