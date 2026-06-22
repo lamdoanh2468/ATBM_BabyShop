@@ -493,6 +493,18 @@
 
             console.log("Params gửi lên:", params.toString());
 
+            const confirmResult = await Swal.fire({
+                icon: "question",
+                title: "Xác nhận thanh toán?",
+                text: "Sau khi xác nhận, số lượng sản phẩm trong đơn hàng sẽ được khóa để ký điện tử.",
+                showCancelButton: true,
+                confirmButtonText: "Xác nhận",
+                cancelButtonText: "Kiểm tra lại"
+            });
+
+            if (!confirmResult.isConfirmed) {
+                return;
+            }
 
             Swal.fire({
                 title: "Đang tạo đơn hàng...",
