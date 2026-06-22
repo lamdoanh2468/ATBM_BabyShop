@@ -448,6 +448,8 @@ function handleUploadSignatureFailure(orderId, data) {
         });
     });
 }
+const pendingCartUpdates = new Map();
+
 async function updateCartQuantity(productId, quantity) {
     const contextPath = typeof CONTEXT_PATH !== "undefined" ? CONTEXT_PATH : "";
 
@@ -456,47 +458,35 @@ async function updateCartQuantity(productId, quantity) {
     params.set("product_id", productId);
     params.set("quantity", quantity);
 
-    const response = await fetch(`${contextPath}/cart?${params.toString()}`, {
+    const request = fetch(`${contextPath}/cart?${params.toString()}`, {
         method: "GET",
         headers: {
             "X-Requested-With": "XMLHttpRequest"
         }
+    }).then(response => {
+        if (!response.ok) {
+            throw new Error("Không thể cập nhật số lượng giỏ hàng");
+        }
+        return response;
     });
 
-    if (!response.ok) {
-        throw new Error("Không thể cập nhật số lượng giỏ hàng");
-    }
-}
-
-async function increaseUI(productId) {
-    const input = document.getElementById(`quantity-${productId}`);
-    if (!input) return;
-
-    const quantity = parseInt(input.value || "1", 10) + 1;
-    input.value = quantity;
-    updateCartTotalsUI();
+    pendingCartUpdates.set(productId, request);
 
     try {
-        await updateCartQuantity(productId, quantity);
-    } catch (error) {
-        console.error(error);
+        await request;
+    } finally {
+        if (pendingCartUpdates.get(productId) === request) {
+            pendingCartUpdates.delete(productId);
+        }
     }
 }
 
-async function decreaseUI(productId) {
-    const input = document.getElementById(`quantity-${productId}`);
-    if (!input) return;
-
-    const cur = parseInt(input.value || "1", 10);
-    if (cur <= 1) return;
-
-    const quantity = cur - 1;
-    input.value = quantity;
-    updateCartTotalsUI();
-
-    try {
-        await updateCartQuantity(productId, quantity);
-    } catch (error) {
-        console.error(error);
+async function waitForCartUpdates() {
+    if (pendingCartUpdates.size === 0) {
+        return;
     }
+
+    await Promise.allSettled(Array.from(pendingCartUpdates.values()));
 }
+
+
