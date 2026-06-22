@@ -5,6 +5,7 @@ import vn.edu.nlu.fit.be.model.*;
 import vn.edu.nlu.fit.be.model.CartItem.CartItem;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class OrdersService {
 
@@ -46,8 +47,16 @@ public class OrdersService {
         return result;
     }
 
-    public int createOrderFromCart(Account account, Cart cart, String deliveryAddress, PaymentMethod paymentMethod, Integer voucherId, int totalPrice) {
-
+    public int createOrderFromCart(
+            Account account,
+            Cart cart,
+            String deliveryAddress,
+            PaymentMethod paymentMethod,
+            Integer voucherId,
+            int subtotalAmount,
+            int discountAmount,
+            int finalAmount
+    ) {
         if (account == null) throw new IllegalArgumentException("Account is null");
         if (cart == null || cart.getTotalQuantity() == 0) throw new IllegalArgumentException("Cart is empty");
         if (deliveryAddress == null || deliveryAddress.trim().isEmpty())
@@ -57,7 +66,9 @@ public class OrdersService {
         o.setAccountId(account.getAccountId());
         o.setStatusOrder(OrderStatus.WAITING_SIGNATURE);
         o.setVoucherId(voucherId == null ? 0 : voucherId);
-        o.setTotalAmount(totalPrice);
+        o.setSubtotalAmount(subtotalAmount);
+        o.setDiscountAmount(discountAmount);
+        o.setTotalAmount(finalAmount);
         o.setDeliveryAddress(deliveryAddress.trim());
         o.setPaymentMethod(paymentMethod);
 
@@ -89,5 +100,10 @@ public class OrdersService {
 
     public Map<Integer, OrderStatus> getOrderStatusesByAccount(int accountId) {
         return dao.getOrderStatusesByAccount(accountId);
+    }
+    public Map<Integer, Order> getOrdersByAccountAsMap(int accountId) {
+        return dao.getOrdersByAccountId(accountId)
+                .stream()
+                .collect(Collectors.toMap(Order::getOrderId, order -> order));
     }
 }

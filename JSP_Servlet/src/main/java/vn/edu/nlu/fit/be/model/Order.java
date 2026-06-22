@@ -9,11 +9,49 @@ public class Order {
     private int voucherId;
 
     private OrderStatus statusOrder;
+    private int subtotalAmount;
+    private int discountAmount;
     private int totalAmount;
     private String deliveryAddress;
     private PaymentMethod paymentMethod;
     private Timestamp orderDate;
     private String username;
+
+
+    public Order() {
+    }
+
+    public Order(int orderId, Timestamp orderDate, PaymentMethod paymentMethod, String deliveryAddress, int subtotalAmount, int discountAmount, int totalAmount, OrderStatus statusOrder, int voucherId, int accountId) {
+        this.orderId = orderId;
+        this.orderDate = orderDate;
+        this.paymentMethod = paymentMethod;
+        this.deliveryAddress = deliveryAddress;
+        this.subtotalAmount = subtotalAmount;
+        this.discountAmount = discountAmount;
+        this.totalAmount = totalAmount;
+        this.statusOrder = statusOrder;
+        this.voucherId = voucherId;
+        this.accountId = accountId;
+
+    }
+
+    public int getSubtotalAmount() {
+        return subtotalAmount;
+    }
+
+    public void setSubtotalAmount(int subtotalAmount) {
+        this.subtotalAmount = subtotalAmount;
+    }
+
+    public int getDiscountAmount() {
+        return discountAmount;
+    }
+
+    public void setDiscountAmount(int discountAmount) {
+        this.discountAmount = discountAmount;
+    }
+
+    //Constructor
 
     public String getUsername() {
         return username;
@@ -21,22 +59,6 @@ public class Order {
 
     public void setUsername(String username) {
         this.username = username;
-    }
-
-    //Constructor
-
-    public Order() {}
-
-    public Order(int orderId, Timestamp orderDate, PaymentMethod paymentMethod, String deliveryAddress, int totalAmount, OrderStatus statusOrder, int voucherId, int accountId) {
-        this.orderId = orderId;
-        this.orderDate = orderDate;
-        this.paymentMethod = paymentMethod;
-        this.deliveryAddress = deliveryAddress;
-        this.totalAmount = totalAmount;
-        this.statusOrder = statusOrder;
-        this.voucherId = voucherId;
-        this.accountId = accountId;
-
     }
 
     // Getters & Setters

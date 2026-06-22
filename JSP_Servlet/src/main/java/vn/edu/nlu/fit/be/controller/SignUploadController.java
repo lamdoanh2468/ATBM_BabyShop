@@ -69,6 +69,7 @@ public class SignUploadController extends HttpServlet {
 
             if (ajax) {
                 String status = result.isSuccess() ? "VERIFIED" : resolveFailureStatus(result.getMessage());
+
                 Map<String, Object> data = new HashMap<>();
                 data.put("verified", result.isSuccess());
                 data.put("status", status);
@@ -78,6 +79,12 @@ public class SignUploadController extends HttpServlet {
                         + "/order-sign/order-json?orderId=" + signedOrder.getOrderId());
                 data.put("signToolUrl", request.getContextPath() + "/signing-tool/download");
 
+                if (result.isSuccess()
+                        || STATUS_TAMPERED.equals(status)
+                        || STATUS_CERTIFICATE_INVALID.equals(status)) {
+                    clearSigningSession(request.getSession(false));
+                }
+
                 writeJson(
                         response,
                         result.isSuccess(),
@@ -86,9 +93,6 @@ public class SignUploadController extends HttpServlet {
                                 : buildFailureMessage(status, result.getMessage()),
                         data
                 );
-                if (result.isSuccess()) {
-                    clearSigningSession(request.getSession(false));
-                }
                 return;
             }
 
