@@ -460,6 +460,9 @@
             }
 
             event.preventDefault();
+            if (typeof waitForCartUpdates === "function") {
+                await waitForCartUpdates();
+            }
 
             const params = new URLSearchParams();
 
@@ -505,7 +508,9 @@
 
             try {
                 const checkoutUrl = checkoutForm.getAttribute("action") || CONTEXT_PATH + "/order";
-
+                if (typeof syncAllCartQuantitiesFromUI === "function") {
+                    await syncAllCartQuantitiesFromUI();
+                }
                 const response = await fetch(checkoutUrl, {
                     method: "POST",
                     body: params,

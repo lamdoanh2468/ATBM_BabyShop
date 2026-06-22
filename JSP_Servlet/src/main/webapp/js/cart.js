@@ -25,19 +25,54 @@ function updateCartTotalsUI() {
     if (totalEl) totalEl.textContent = total.toLocaleString("vi-VN") + "đ";
 }
 
-function increaseUI(productId) {
+async function increaseUI(productId) {
     const input = document.getElementById(`quantity-${productId}`);
     if (!input) return;
-    input.value = (parseInt(input.value || "1", 10) + 1);
+
+    const oldQuantity = parseInt(input.value || "1", 10);
+    const newQuantity = oldQuantity + 1;
+
+    input.value = newQuantity;
     updateCartTotalsUI();
+
+    try {
+        await updateCartQuantity(productId, newQuantity);
+    } catch (error) {
+        input.value = oldQuantity;
+        updateCartTotalsUI();
+
+        Swal.fire({
+            icon: "error",
+            title: "Không thể cập nhật giỏ hàng",
+            text: error.message || "Vui lòng thử lại."
+        });
+    }
 }
 
-function decreaseUI(productId) {
+async function decreaseUI(productId) {
     const input = document.getElementById(`quantity-${productId}`);
     if (!input) return;
-    const cur = parseInt(input.value || "1", 10);
-    if (cur > 1) input.value = cur - 1;
+
+    const oldQuantity = parseInt(input.value || "1", 10);
+    if (oldQuantity <= 1) return;
+
+    const newQuantity = oldQuantity - 1;
+
+    input.value = newQuantity;
     updateCartTotalsUI();
+
+    try {
+        await updateCartQuantity(productId, newQuantity);
+    } catch (error) {
+        input.value = oldQuantity;
+        updateCartTotalsUI();
+
+        Swal.fire({
+            icon: "error",
+            title: "Không thể cập nhật giỏ hàng",
+            text: error.message || "Vui lòng thử lại."
+        });
+    }
 }
 
 document.addEventListener("DOMContentLoaded", updateCartTotalsUI);
@@ -448,3 +483,60 @@ function handleUploadSignatureFailure(orderId, data) {
         });
     });
 }
+const pendingCartUpdates = new Map();
+
+async function updateCartQuantity(productId, quantity) {
+    const contextPath = typeof CONTEXT_PATH !== "undefined" ? CONTEXT_PATH : "";
+
+    const params = new URLSearchParams();
+    params.set("action", "update");
+    params.set("product_id", productId);
+    params.set("quantity", quantity);
+
+    const request = fetch(`${contextPath}/cart?${params.toString()}`, {
+        method: "GET",
+        headers: {
+            "X-Requested-With": "XMLHttpRequest"
+        }
+    }).then(response => {
+        if (!response.ok) {
+            throw new Error("Không thể cập nhật số lượng giỏ hàng");
+        }
+        return response;
+    });
+
+    pendingCartUpdates.set(productId, request);
+
+    try {
+        await request;
+    } finally {
+        if (pendingCartUpdates.get(productId) === request) {
+            pendingCartUpdates.delete(productId);
+        }
+    }
+}
+
+async function waitForCartUpdates() {
+    if (pendingCartUpdates.size === 0) {
+        return;
+    }
+
+    await Promise.allSettled(Array.from(pendingCartUpdates.values()));
+}
+async function syncAllCartQuantitiesFromUI() {
+    const inputs = document.querySelectorAll(".quantity-input");
+
+    for (const input of inputs) {
+        const id = input.id || "";
+        const productId = id.replace("quantity-", "");
+        const quantity = parseInt(input.value || "1", 10);
+
+        if (!productId || Number.isNaN(quantity)) {
+            continue;
+        }
+
+        await updateCartQuantity(productId, Math.max(1, quantity));
+    }
+}
+
+
