@@ -448,3 +448,45 @@ function handleUploadSignatureFailure(orderId, data) {
         });
     });
 }
+const pendingCartUpdates = new Map();
+
+async function updateCartQuantity(productId, quantity) {
+    const contextPath = typeof CONTEXT_PATH !== "undefined" ? CONTEXT_PATH : "";
+
+    const params = new URLSearchParams();
+    params.set("action", "update");
+    params.set("product_id", productId);
+    params.set("quantity", quantity);
+
+    const request = fetch(`${contextPath}/cart?${params.toString()}`, {
+        method: "GET",
+        headers: {
+            "X-Requested-With": "XMLHttpRequest"
+        }
+    }).then(response => {
+        if (!response.ok) {
+            throw new Error("Không thể cập nhật số lượng giỏ hàng");
+        }
+        return response;
+    });
+
+    pendingCartUpdates.set(productId, request);
+
+    try {
+        await request;
+    } finally {
+        if (pendingCartUpdates.get(productId) === request) {
+            pendingCartUpdates.delete(productId);
+        }
+    }
+}
+
+async function waitForCartUpdates() {
+    if (pendingCartUpdates.size === 0) {
+        return;
+    }
+
+    await Promise.allSettled(Array.from(pendingCartUpdates.values()));
+}
+
+

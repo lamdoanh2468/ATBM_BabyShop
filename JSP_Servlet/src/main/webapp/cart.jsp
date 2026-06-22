@@ -460,6 +460,9 @@
             }
 
             event.preventDefault();
+            if (typeof waitForCartUpdates === "function") {
+                await waitForCartUpdates();
+            }
 
             const params = new URLSearchParams();
 
