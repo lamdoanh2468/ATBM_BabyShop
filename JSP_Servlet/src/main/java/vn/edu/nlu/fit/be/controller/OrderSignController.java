@@ -104,10 +104,54 @@ public class OrderSignController extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/bought-product");
             return;
         }
+        if (certificateService.getActiveCertByAccountId(account.getAccountId()).isEmpty()) {
+            String message = "Tài khoản chưa có chứng thư ký điện tử. Vui lòng tạo chứng thư trước khi tải dữ liệu đơn hàng.";
 
-        OrderToSignRes payload = orderSigningService.getOrderToSign(orderId, account.getAccountId());
+            if (isAjax(request)) {
+                writeJsonError(response, HttpServletResponse.SC_BAD_REQUEST, message);
+            } else {
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, message);
+            }
+
+            return;
+        }
+
+        OrderToSignRes payload;
+
+        try {
+            payload = orderSigningService.getOrderToSign(orderId, account.getAccountId());
+        } catch (IllegalStateException e) {
+            String message = "Tài khoản chưa có chứng thư ký điện tử. Vui lòng tạo chứng thư trước khi tải dữ liệu đơn hàng.";
+
+            if (isAjax(request)) {
+                writeJsonError(response, HttpServletResponse.SC_BAD_REQUEST, message);
+            } else {
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, message);
+            }
+
+            return;
+        }
+
         if (payload == null) {
-            response.sendError(HttpServletResponse.SC_NOT_FOUND, "Order signing payload not found");
+            String message = "Không tìm thấy dữ liệu ký của đơn hàng.";
+
+            if (isAjax(request)) {
+                writeJsonError(response, HttpServletResponse.SC_NOT_FOUND, message);
+            } else {
+                response.sendError(HttpServletResponse.SC_NOT_FOUND, message);
+            }
+
+            return;
+        }
+        if (payload.getCertificateId() <= 0) {
+            String message = "Dữ liệu ký không hợp lệ vì chưa có chứng thư điện tử.";
+
+            if (isAjax(request)) {
+                writeJsonError(response, HttpServletResponse.SC_BAD_REQUEST, message);
+            } else {
+                response.sendError(HttpServletResponse.SC_BAD_REQUEST, message);
+            }
+
             return;
         }
 
@@ -149,6 +193,19 @@ public class OrderSignController extends HttpServlet {
     private boolean canDownloadSigningPayload(OrderStatus status) {
         return status == OrderStatus.WAITING_SIGNATURE
                 || status == OrderStatus.SIGNATURE_INVALID;
+    }
+    private boolean isAjax(HttpServletRequest request) {
+        return "XMLHttpRequest".equals(request.getHeader("X-Requested-With"));
+    }
+
+    private void writeJsonError(HttpServletResponse response, int status, String message)
+            throws IOException {
+        response.setStatus(status);
+        response.setContentType("application/json; charset=UTF-8");
+        response.getWriter().write(gson.toJson(java.util.Map.of(
+                "success", false,
+                "message", message
+        )));
     }
 
 }

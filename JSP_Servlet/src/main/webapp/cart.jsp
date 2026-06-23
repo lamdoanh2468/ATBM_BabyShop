@@ -561,27 +561,30 @@
         const signingUrl = orderData.signingUrl || "#";
         const signToolUrl = orderData.signToolUrl || (CONTEXT_PATH + "/signing-tool/download");
         const privateKeyUrl = normalizeAppUrl(orderData.privateKeyUrl || "");
+        const mustDownloadPrivateKey = !!privateKeyUrl;
         const retryMessage = orderData.retryMessage || "";
+        const hasActiveCert = orderData.hasActiveCert === true || orderData.hasActiveCert === "true";
         const downloadDataTitle = retryMessage
             ? "1. Tải lại dữ liệu đơn hàng"
             : "1. Tải dữ liệu đơn hàng";
+
         let privateKeyHtml = "";
 
         if (!orderData.hasActiveCert) {
             privateKeyHtml =
-                '<a id="btnDownloadPrivateKey" ' +
-                '   class="sign-step-card warning" ' +
-                '   href="' + CONTEXT_PATH + '/security-key" target="_blank">' +
-                '   <strong>3. Người dùng chưa có private key, tải private key</strong>' +
-                '   <span>Chuyển hướng sang trang quản lý để tạo chứng chỉ và tải private key.</span>' +
-                '</a>';
+                '<div class="sign-step-card warning">' +
+                '   <strong>3. Chưa có chứng thư ký điện tử</strong>' +
+                '   <span>Hệ thống chưa tạo được chứng thư cho tài khoản này. Vui lòng thử lại hoặc vào trang quản lý khóa bảo mật.</span>' +
+                '   <a href="' + CONTEXT_PATH + '/security-key" target="_blank">Mở trang chữ ký điện tử và chứng thư số </a>' +
+                '</div>';
         } else if (privateKeyUrl) {
             privateKeyHtml =
                 '<a id="btnDownloadPrivateKey" ' +
                 '   class="sign-step-card warning" ' +
-                '   href="' + CONTEXT_PATH + '/security-key" target="_blank">' +
-                '   <strong>3. Bạn chưa tải private key, tải ngay</strong>' +
-                '   <span>Chuyển hướng sang trang quản lý để tải private key.</span>' +
+                '   href="' + escapeAttr(privateKeyUrl) + '">' +
+                '   <strong>3. Tải private key mới</strong>' +
+                '   <span>Đây là lần đầu bạn ký đơn hàng. Hệ thống đã tạo chứng thư và private key cho bạn. ' +
+                'Private key chỉ tải được một lần, hãy lưu lại an toàn trước khi ký.</span>' +
                 '</a>';
         } else {
             privateKeyHtml =
@@ -600,10 +603,17 @@
             '       Vui lòng tải dữ liệu đơn hàng, ký bằng private key, rồi upload file chữ ký để xác minh.' +
             '   </p>' +
             '   <div class="sign-popup-steps">' +
-            '       <a class="sign-step-card primary" href="' + escapeAttr(signingUrl) + '">' +
-            '           <strong>' + escapeHtml(downloadDataTitle) + '</strong>' +
-            '           <span>Tải file dữ liệu đơn hàng để ký bằng tool.</span>' +
-            '       </a>' +
+            (hasActiveCert
+                    ? '       <button type="button" id="btnDownloadOrderData" class="sign-step-card primary" ' +
+                    'style="width:100%; text-align:left; cursor:pointer;">' +
+                    '           <strong>' + escapeHtml(downloadDataTitle) + '</strong>' +
+                    '           <span>Tải file dữ liệu đơn hàng để ký bằng tool.</span>' +
+                    '       </button>'
+                    : '       <div class="sign-step-card warning">' +
+                    '           <strong>1. Chưa thể tải dữ liệu đơn hàng</strong>' +
+                    '           <span>Tài khoản chưa có chứng thư ký điện tử. Vui lòng tạo chứng thư trước khi ký đơn hàng.</span>' +
+                    '       </div>'
+            ) +
 
             '       <a class="sign-step-card" href="' + escapeAttr(signToolUrl) + '">' +
             '           <strong>2. Tải tool ký</strong>' +
@@ -615,13 +625,17 @@
             '       <div class="sign-upload-box">' +
             '           <label for="signedOrderFile">4. Upload file chữ ký</label>' +
             '           <input id="signedOrderFile" type="file" accept=".json,application/json">' +
-            '           <button type="button" id="btnUploadSignature" class="swal2-confirm swal2-styled">' +
+            '           <button type="button" id="btnUploadSignature" class="swal2-confirm swal2-styled" ' +
+            (mustDownloadPrivateKey ? 'disabled style="opacity:0.6; cursor:not-allowed;"' : '') +
+            '           >' +
             '               Upload chữ ký' +
             '           </button>' +
             '           <div id="signStatusBox">' +
-            (retryMessage
-                ? '<p class="sign-status-error">' + escapeHtml(retryMessage) + '</p>'
-                : '') +
+            (mustDownloadPrivateKey
+                ? '<p class="sign-status-error">Bạn cần tải private key trước, sau đó dùng tool để ký đơn hàng.</p>'
+                : retryMessage
+                    ? '<p class="sign-status-error">' + escapeHtml(retryMessage) + '</p>'
+                    : '') +
             '           </div>' +
             '       </div>' +
             '   </div>' +
@@ -641,12 +655,18 @@
                 const btnReissuePrivateKey = document.getElementById("btnReissuePrivateKey");
 
                 const btnDownloadHash = document.getElementById("btnDownloadHash");
+                const btnDownloadOrderData = document.getElementById("btnDownloadOrderData");
 
                 if (btnDownloadHash) {
                     btnDownloadHash.addEventListener("click", function () {
                         const oid = this.getAttribute("data-order-id");
                         const hash = this.getAttribute("data-order-hash") || "";
                         downloadOrderHash(oid, hash);
+                    });
+                }
+                if (btnDownloadOrderData) {
+                    btnDownloadOrderData.addEventListener("click", function () {
+                        downloadSigningPayload(signingUrl, orderId);
                     });
                 }
 
@@ -669,7 +689,7 @@
                     });
                 }
 
-                document.addEventListener("visibilitychange", function() {
+                document.addEventListener("visibilitychange", function () {
                     if (document.visibilityState === 'visible' && hasNavigatedToSecurityKey) {
                         window.location.reload();
                     }
@@ -1056,6 +1076,64 @@
                 showCloseButton: false
             }).then(function () {
                 showSigningPopup(orderData);
+            });
+        }
+    }
+
+    async function downloadSigningPayload(signingUrl, orderId) {
+        try {
+            const response = await fetch(signingUrl, {
+                method: "GET",
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            });
+
+            if (!response.ok) {
+                let message = "Không thể tải dữ liệu đơn hàng.";
+
+                const contentType = response.headers.get("content-type") || "";
+
+                if (contentType.includes("application/json")) {
+                    const data = await response.json();
+                    message = data.message || message;
+                } else {
+                    const text = await response.text();
+                    if (text) {
+                        message = text;
+                    }
+                }
+
+                Swal.fire({
+                    icon: "error",
+                    title: "Không thể tải dữ liệu ký",
+                    text: message,
+                    confirmButtonText: "Đã hiểu",
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showCloseButton: false
+                });
+
+                return;
+            }
+
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "order_to_sign_" + orderId + ".json";
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            Swal.fire({
+                icon: "error",
+                title: "Lỗi tải dữ liệu ký",
+                text: error.message || "Không thể tải dữ liệu đơn hàng.",
+                confirmButtonText: "Đã hiểu"
             });
         }
     }

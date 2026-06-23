@@ -24,14 +24,22 @@ public class CheckoutSigningService {
                                                         Cart cart,
                                                         String deliveryAddress,
                                                         PaymentMethod paymentMethod,
-                                                        Integer voucherId, int subtotalAmount,
+                                                        Integer voucherId,
+                                                        int subtotalAmount,
                                                         int discountAmount,
                                                         int finalPrice) throws Exception {
         validateInput(account, cart, deliveryAddress);
         ensureStockAvailable(cart);
 
-        boolean hasActiveCert = certificateService.getActiveCertByAccountId(account.getAccountId()).isPresent();
-        boolean hasPrivateKeyForDownload = certificateService.hasPendingPrivateKey(account.getAccountId());
+        // BẮT BUỘC: đảm bảo user có certificate trước khi tạo order hash
+        certificateService.ensureActiveCert(account.getAccountId());
+
+        boolean hasActiveCert = certificateService
+                .getActiveCertByAccountId(account.getAccountId())
+                .isPresent();
+
+        boolean hasPrivateKeyForDownload = certificateService
+                .hasPendingPrivateKey(account.getAccountId());
 
         int orderId = ordersService.createOrderFromCart(
                 account,
