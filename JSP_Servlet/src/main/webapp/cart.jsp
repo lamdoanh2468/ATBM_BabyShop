@@ -557,6 +557,7 @@
     }
 
     function showSigningPopup(orderData) {
+        const mustDownloadPrivateKey = !!privateKeyUrl;
         const orderId = Number(orderData.orderId);
         const signingUrl = orderData.signingUrl || "#";
         const signToolUrl = orderData.signToolUrl || (CONTEXT_PATH + "/signing-tool/download");
@@ -569,21 +570,21 @@
 
         if (!orderData.hasActiveCert) {
             privateKeyHtml =
-                '<a id="btnDownloadPrivateKey" ' +
-                '   class="sign-step-card warning" ' +
-                '   href="' + CONTEXT_PATH + '/security-key" target="_blank">' +
-                '   <strong>3. Người dùng chưa có private key, tải private key</strong>' +
-                '   <span>Chuyển hướng sang trang quản lý để tạo chứng chỉ và tải private key.</span>' +
-                '</a>';
-        } else if (privateKeyUrl) {
-            privateKeyHtml =
-                '<a id="btnDownloadPrivateKey" ' +
-                '   class="sign-step-card warning" ' +
-                '   href="' + CONTEXT_PATH + '/security-key" target="_blank">' +
-                '   <strong>3. Bạn chưa tải private key, tải ngay</strong>' +
-                '   <span>Chuyển hướng sang trang quản lý để tải private key.</span>' +
-                '</a>';
-        } else {
+                '<div class="sign-step-card warning">' +
+                '   <strong>3. Chưa có chứng thư ký điện tử</strong>' +
+                '   <span>Hệ thống chưa tạo được chứng thư cho tài khoản này. Vui lòng thử lại hoặc vào trang quản lý khóa bảo mật.</span>' +
+                '   <a href="' + CONTEXT_PATH + '/security-key" target="_blank">Mở trang chữ ký điện tử và chứng thư số </a>' +
+                '</div>';
+        }  else if (privateKeyUrl) {
+        privateKeyHtml =
+            '<a id="btnDownloadPrivateKey" ' +
+            '   class="sign-step-card warning" ' +
+            '   href="' + escapeAttr(privateKeyUrl) + '">' +
+            '   <strong>3. Tải private key mới</strong>' +
+            '   <span>Đây là lần đầu bạn ký đơn hàng. Hệ thống đã tạo chứng thư và private key cho bạn. ' +
+            'Private key chỉ tải được một lần, hãy lưu lại an toàn trước khi ký.</span>' +
+            '</a>';
+    } else {
             privateKeyHtml =
                 '<div class="sign-step-card success">' +
                 '   <strong>3. Bạn đã tải private key</strong>' +
@@ -615,13 +616,17 @@
             '       <div class="sign-upload-box">' +
             '           <label for="signedOrderFile">4. Upload file chữ ký</label>' +
             '           <input id="signedOrderFile" type="file" accept=".json,application/json">' +
-            '           <button type="button" id="btnUploadSignature" class="swal2-confirm swal2-styled">' +
+            '           <button type="button" id="btnUploadSignature" class="swal2-confirm swal2-styled" ' +
+            (mustDownloadPrivateKey ? 'disabled style="opacity:0.6; cursor:not-allowed;"' : '') +
+            '           >' +
             '               Upload chữ ký' +
             '           </button>' +
             '           <div id="signStatusBox">' +
-            (retryMessage
-                ? '<p class="sign-status-error">' + escapeHtml(retryMessage) + '</p>'
-                : '') +
+            (mustDownloadPrivateKey
+                ? '<p class="sign-status-error">Bạn cần tải private key trước, sau đó dùng tool để ký đơn hàng.</p>'
+                : retryMessage
+                    ? '<p class="sign-status-error">' + escapeHtml(retryMessage) + '</p>'
+                    : '') +
             '           </div>' +
             '       </div>' +
             '   </div>' +

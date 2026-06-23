@@ -89,14 +89,13 @@ public class OrderSigningService {
             return null;
         }
 
-        Certificate cert = certificateService.getActiveCertByAccountId(accountId).orElse(null);
+        Certificate cert = certificateService.getActiveCertByAccountId(accountId)
+                .orElseThrow(() -> new IllegalStateException("User does not have an active certificate"));
 
         OrderToSignRes signRes = new OrderToSignRes();
         signRes.setOrderId(orderId);
         signRes.setAccountId(accountId);
-        if (cert != null) {
-            signRes.setCertificateId(cert.getCertificateId());
-        }
+        signRes.setCertificateId(cert.getCertificateId());
         signRes.setOrderHash(sign.getOrderHash());
         signRes.setSnapshotJson(sign.getSnapshotJson());
         signRes.setHashAlgorithm(sign.getHashAlgorithm());
